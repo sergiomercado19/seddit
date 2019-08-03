@@ -56,7 +56,7 @@ footer {
   border-radius: 50%;
 }
 
-#search {
+.text {
   background-color: var(--reddit-bg-color);
   font: inherit;
   font-size: var(--body-text-size);
@@ -67,12 +67,12 @@ footer {
   border-radius: 4px;
 }
 
-#search::placeholder {
+.text::placeholder {
   letter-spacing: 0.5px;
   font-size: var(--body-text-size);
 }
 
-#search:focus {
+.text:focus {
   background-color: white;
   border-color: var(--reddit-blue);
 }
@@ -83,6 +83,11 @@ footer {
   text-transform: uppercase;
   padding: 7.5px 15px;
   font-weight: bold;
+  cursor: pointer;
+}
+
+.button:hover {
+   opacity: 50%;
 }
 
 .button-primary {
