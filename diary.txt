@@ -1,2 +1,6 @@
-25/07/19     18:00   18:15   put the first real entry in diary.txt (delete this line!)
-
+Date     Start	Stop	Activity	   Comments
+1/08/19  11:30 14:30 Coding      Replicated sample HTML page to be created through JavaScript
+1/08/19  15:00 17:00 Coding      Created LOG IN and SIGN UP buttons and modals
+2/08/19  10:00 12:00 Coding      Implemented feed interface
+2/08/19  11:00 01:00 Debugging   Debugged communication to the backend for authentication routes
+3/08/19  13:00 17:00 Coding      Added upvote buttons and visible upvote count

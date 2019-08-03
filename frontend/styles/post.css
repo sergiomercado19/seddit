@@ -1,28 +1,97 @@
 
 .post {
-  display: flex;
-  overflow: hidden;
-  margin: 20px 0;
-  background-color: white;
-  border: 1px solid var(--reddit-grey);
+   display: flex;
+   overflow: hidden;
+   margin: 20px 0;
+   background-color: white;
+   border: 1px solid var(--reddit-grey);
+   border-radius: 4px;
+   max-height: 150px;
+}
+
+.post:hover {
+   border: 1px solid grey;
 }
 
 .post .vote {
-  width: 35px;
-  background-color: var(--reddit-light-grey);
+   width: 50px;
+   padding-top: 16px;
+   background-color: var(--reddit-light-grey);
 }
 
 .post .content {
-  padding: 10px;
+   padding: 5px;
+   width: 100%;
+}
+
+.post .thumbnail {
+   width: 150px;
+   height: 150px;
+   border-top-right-radius: 4px;
+   border-bottom-right-radius: 4px;
 }
 
 .post-title {
-  padding-bottom: 10px;
-  margin: 0;
+   padding-bottom: 10px;
+   margin: 0;
+}
+
+.post-description {
+   padding-bottom: 10px;
+   margin: 0;
 }
 
 .post-author {
-  margin: 5px 0;
-  font-size: 12px;
-  color: var(--reddit-blue);
+   margin: 5px 0;
+   font-size: 11px;
+   color: var(--reddit-blue);
+}
+
+.post-subseddit {
+   display: inline-block;
+   margin: 5px 0;
+   font-size: 12px;
+   font-weight: bolder;
+   color: #1C1C1C;
+}
+
+.break {
+   vertical-align: middle;
+   margin: 0 4px;
+   color: var(--reddit-grey);
+   font-size: 12px;
+   font-weight: bold;
+   line-height: 20px;
+}
+
+/* Vote arrows from w3schools.com */
+.vote-element {
+   display: block;
+   text-align: center;
+   cursor: pointer;
+}
+
+.vote-element:hover .arrow-up {
+   border: solid var(--reddit-orange);
+   border-width: 0 3px 3px 0;
+}
+
+.vote-toggled {
+   display: block;
+   text-align: center;
+   cursor: pointer;
+}
+
+.vote-toggled .arrow-up {
+   border: solid var(--reddit-orange);
+   border-width: 0 3px 3px 0;
+}
+
+.arrow-up {
+   border: solid black;
+   border-width: 0 3px 3px 0;
+   display: inline-block;
+   padding: 3px;
+   transform: rotate(-135deg);
+   -webkit-transform: rotate(-135deg);
 }
