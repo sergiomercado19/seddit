@@ -70,9 +70,11 @@ function initApp(apiUrl) {
          loginModal.style.display = 'none';
          document.getElementById("loginForm").reset();
          document.getElementById('loginError').textContent = "";
+         document.body.style.overflow = "visible";
       });
       document.getElementById("loginButton").addEventListener('click', () => {
          loginModal.style.display = 'block';
+         document.body.style.overflow = "hidden";
       });
 
       // Close when grey area is clicked
@@ -81,6 +83,7 @@ function initApp(apiUrl) {
             loginModal.style.display = "none";
             document.getElementById("loginForm").reset();
             document.getElementById('loginError').textContent = "";
+            document.body.style.overflow = "visible";
          }
       };
 
@@ -100,9 +103,11 @@ function initApp(apiUrl) {
          signupModal.style.display = 'none';
          document.getElementById("signupForm").reset();
          document.getElementById('signupError').textContent = "";
+         document.body.style.overflow = "visible";
       });
       document.getElementById("signupButton").addEventListener('click', () => {
          signupModal.style.display = 'block';
+         document.body.style.overflow = "hidden";
       });
 
       // Close when grey area is clicked
@@ -111,6 +116,7 @@ function initApp(apiUrl) {
             signupModal.style.display = "none";
             document.getElementById("signupForm").reset();
             document.getElementById('signupError').textContent = "";
+            document.body.style.overflow = "visible";
          }
       };
 
