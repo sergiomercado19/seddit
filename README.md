@@ -20,7 +20,7 @@ Some of the skills/concepts this assignment aims to test (and build upon):
 * Fetching data from an API
 * Infinite scroll
 * CSS Animations
-* Web Workers
+* Web Workers / Service Workers
 * Push Notifications (Polling)
 * Offline Support
 * Routing (URL fragment based routing)
@@ -179,7 +179,7 @@ For now it's ok if the upvote doesn't show up until the page is refreshed.
 In addition the user can also retract their upvote, you can do this via `DELETE /post/vote`
 
 **Post new content**
-Logged in users can upload and post new content from a [modal](https://www.webopedia.com/TERM/M/modal_window.html) or seperate page via (`POST /post`). The uploaded content can either be text, an image, or a combination of both.
+Logged in users can upload and post new content from a [modal](https://www.webopedia.com/TERM/M/modal_window.html) or seperate page via (`POST /post`). The uploaded content can either be text or text and an image.
 
 **Pagination**
 Logged in users can page between sets of results in the feed using the position token with (`GET /user/feed`).
@@ -207,12 +207,11 @@ update without requiring a page reload/refresh.
 **Update Profile**
 Users can update their personal profile via (`PUT /user`) E.g:
 * Update email address
-* Update their profile picture
 * Update password
+* etc.
 
 **User Pages**
-Let a logged in user click on a user's name/picture from a post and see a page with the users name, 
-profile pic, and other info.
+Let a logged in user click on a user's name/picture from a post and see a page with the users name and other info.
 The user should also see on this page all posts made by that person across all "subseddits".
 The user should be able to see their own page as well.
 
@@ -246,7 +245,7 @@ The delay is up to you, but remember you want it to look semi live without
 overwhelming the event queue.
 
 **Offline Access**
-Users can access the "Seddit" at all times by using Web Workers to cache the page (and previous content) locally.
+Users can access the "Seddit" at all times by using Service Workers to cache the page (and previous content) locally.
 d
 **Fragment based URL routing**
 Users can access different pages using URL fragments:
