@@ -86,7 +86,7 @@ export function createSignUpModal() {
    const signupModal = document.createElement('div');
    signupModal.classList.add('modal');
    signupModal.id = "signupModal";
-   signupModal.style.display='none';
+   signupModal.style.display = 'none';
 
    const content = document.createElement('div');
    content.classList.add('modal-content');
@@ -187,6 +187,73 @@ export function createSignUpModal() {
 ////////////////
 // UPVOTES MODAL
 ////////////////
-export function upvotesModal() {
+export async function createUpvotesModal(apiUrl, postId) {
+   const upvotesModal = document.createElement('div');
+   upvotesModal.classList.add('modal');
+   upvotesModal.id = "upvotesModal";
+   upvotesModal.style.display = 'block';
 
+   const content = document.createElement('div');
+   content.classList.add('modal-content');
+
+   // Header
+   const modalHeader = document.createElement('div');
+   modalHeader.classList.add('container');
+   const close = document.createElement('span');
+   close.id = "closeUpvotesModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   modalHeader.appendChild(close);
+   modalHeader.appendChild(document.getElementById('logo').cloneNode(true));
+   const heading = document.createElement('h2');
+   heading.textContent = "UPVOTES";
+   modalHeader.appendChild(heading);
+   content.appendChild(modalHeader);
+
+   // Body
+   const modalBody = document.createElement('div');
+   modalBody.classList.add('container');
+   const list = document.createElement('ul');
+   list.classList.add('modal-list');
+   /// Get post
+   const post = await getPost(apiUrl, postId);
+   for (const id of post.meta.upvotes) {
+      const user = await getUser(apiUrl, id);
+      const item = document.createElement('li');
+      item.textContent = user.name;
+      list.appendChild(item);
+   }
+   modalBody.appendChild(list);
+   content.appendChild(modalBody);
+   upvotesModal.appendChild(content);
+
+   return upvotesModal;
+}
+
+function getPost(apiUrl, postId) {
+   const options = {
+      headers: {
+         'accept': 'application/json',
+         'Authorization': `Token ${localStorage.getItem('userToken')}`
+      }
+   }
+   return new Promise(resolve => {
+      fetch(`${apiUrl}/post/?id=${postId}`, options)
+      .then(res => res.json())
+      .then(data => resolve(data));
+   });
+}
+
+function getUser(apiUrl, userId) {
+   const options = {
+      headers: {
+         'accept': 'application/json',
+         'Authorization': `Token ${localStorage.getItem('userToken')}`
+      }
+   }
+   return new Promise(resolve => {
+      fetch(`${apiUrl}/user/?id=${userId}`, options)
+      .then(res => res.json())
+      .then(data => resolve(data));
+   }); 
 }

@@ -4,3 +4,5 @@ Date     Start	Stop	Activity	   Comments
 2/08/19  10:00 12:00 Coding      Implemented feed interface
 2/08/19  11:00 01:00 Debugging   Debugged communication to the backend for authentication routes
 3/08/19  13:00 17:00 Coding      Added upvote buttons and visible upvote count
+7/08/19  21:00 23:00 Coding      Implemented modal that shows upvotes
+7/08/19  23:00 00:30 Debugging   Fixed an element that was rendering before the promise was resolved.
