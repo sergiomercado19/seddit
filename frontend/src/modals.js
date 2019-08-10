@@ -1,3 +1,5 @@
+import {getPost, getUser, fetchFeed} from './helpers.js';
+
 //////////////
 // LOGIN MODAL
 //////////////
@@ -184,10 +186,254 @@ export function createSignUpModal() {
    return signupModal;
 }
 
+/////////////
+// POST MODAL
+/////////////
+export function createNewPostModal() {
+   const newPostModal = document.createElement('div');
+   newPostModal.classList.add('modal');
+   newPostModal.id = "newPostModal";
+   newPostModal.style.display = 'none';
+
+   const content = document.createElement('div');
+   content.classList.add('modal-content');
+
+   const form = document.createElement('form');
+   form.style.paddingRight = "25%";
+   form.id = "newPostForm";
+   
+   // Header
+   const modalHeader = document.createElement('div');
+   modalHeader.classList.add('container');
+   const close = document.createElement('span');
+   close.id = "closeNewPostModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   modalHeader.appendChild(close);
+   const heading = document.createElement('h2');
+   heading.textContent = "CREATE NEW POST";
+   modalHeader.appendChild(heading);
+   form.appendChild(modalHeader);
+
+   // Body
+   const modalBody = document.createElement('div');
+   modalBody.classList.add('container');
+   /// Title
+   const titleLabel = document.createElement('label');
+   titleLabel.style.fontWeight = "bold";
+   titleLabel.textContent = "Title";
+   const titleInput = document.createElement('input');
+   titleInput.setAttribute('required', '');
+   titleInput.classList.add('text');
+   titleInput.type = "text";
+   titleInput.placeholder = "Enter Title";
+   titleInput.name = "title";
+   /// Text
+   const textLabel = document.createElement('label');
+   textLabel.style.fontWeight = "bold";
+   textLabel.textContent = "Text";
+   const textInput = document.createElement('textarea');
+   textInput.setAttribute('required', '');
+   textInput.classList.add('text');
+   textInput.style.resize = "vertical";
+   textInput.placeholder = "Enter Text";
+   textInput.name = "text";
+   textInput.rows = "6";
+   /// Subseddit
+   const subsedditLabel = document.createElement('label');
+   subsedditLabel.style.fontWeight = "bold";
+   subsedditLabel.textContent = "Subseddit";
+   const subsedditInput = document.createElement('input');
+   subsedditInput.setAttribute('required', '');
+   subsedditInput.classList.add('text');
+   subsedditInput.type = "text";
+   subsedditInput.placeholder = "Enter Subseddit";
+   subsedditInput.name = "subseddit";
+   /// Image
+   const imageLabel = document.createElement('label')
+   imageLabel.style.fontWeight = "bold";
+   imageLabel.textContent = "Image ";
+   const imageInput = document.createElement('input');
+   imageInput.id = "uploadedImage";
+   imageInput.style.margin = "8px 0px";
+   imageInput.type = "file";
+   imageInput.placeholder = "Upload Image";
+   imageInput.name = "image";
+   imageInput.accept = "image/png";
+   /// Error box
+   const signupError = document.createElement('div');
+   signupError.id = "newPostError";
+   signupError.style.color = "red";
+   /// Submit
+   const space = document.createElement('div');
+   space.style.height = "15px";
+   const submit = document.createElement('button');
+   submit.classList.add('button');
+   submit.classList.add('button-secondary');
+   submit.type = "submit";
+   submit.textContent = "POST";
+
+   modalBody.appendChild(titleLabel);
+   modalBody.appendChild(titleInput);
+   modalBody.appendChild(textLabel);
+   modalBody.appendChild(textInput);
+   modalBody.appendChild(subsedditLabel);
+   modalBody.appendChild(subsedditInput);
+   modalBody.appendChild(imageLabel);
+   modalBody.appendChild(imageInput);
+   modalBody.appendChild(signupError);
+   modalBody.appendChild(space);
+   modalBody.appendChild(submit);
+
+   form.appendChild(modalBody);
+   content.appendChild(form);
+   newPostModal.appendChild(content);
+
+   return newPostModal;
+}
+
+//////////////
+// IMAGE MODAL
+//////////////
+export async function createImageModal(postId) {
+   const imageModal = document.createElement('div');
+   imageModal.id = "imageModal";
+   imageModal.classList.add('modal');
+   imageModal.style.display = 'block';
+
+   const close = document.createElement('span');
+   close.id = "closeImageModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   imageModal.appendChild(close);
+
+   // Get full image
+   let post;
+   if (localStorage.getItem('userLoggedIn') == 'true') {
+      post = await getPost(postId);
+   } else {
+      post = await new Promise(resolve => {
+         fetchFeed()
+         .then(res => res.json())
+         .then(data => {
+            const p = data.posts.find(p => p.id == postId);
+            resolve(p);
+         });
+      });
+   }
+
+   const image = document.createElement('img');
+   image.classList.add('modal-content');
+   image.classList.add('modal-image');
+   image.style.width = "auto";
+   image.src = `data:image/png;base64,${post.image}`;
+   imageModal.appendChild(image);
+
+   return imageModal;
+}
+
+////////////////
+// PROFILE MODAL
+////////////////
+export async function createProfileModal() {
+   const profileModal = document.createElement('div');
+   profileModal.classList.add('modal');
+   profileModal.id = "profileModal";
+   profileModal.style.display = 'block';
+
+   const content = document.createElement('div');
+   content.classList.add('modal-content');
+
+   /// Get user
+   const user = await getUser();
+
+   // Header
+   const modalHeader = document.createElement('div');
+   modalHeader.classList.add('container');
+   const close = document.createElement('span');
+   close.id = "closeProfileModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   modalHeader.appendChild(close);
+   const heading = document.createElement('h2');
+   heading.textContent = user.name.toUpperCase();
+   modalHeader.appendChild(heading);
+   content.appendChild(modalHeader);
+
+   // Body
+   const modalBody = document.createElement('div');
+   modalBody.classList.add('container');
+   const username = document.createElement('h4');
+   username.textContent = `Username: ${user.username}`;
+   modalBody.appendChild(username);
+   const email = document.createElement('h4');
+   email.textContent = `Email: ${user.email}`;
+   modalBody.appendChild(email);
+   /// Stats
+   const stats = document.createElement('h4');
+   stats.textContent = "Stats";
+   modalBody.appendChild(stats);
+   const statsList = document.createElement('ul');
+   statsList.classList.add('modal-list');
+   //// # of Posts
+   const statsPosts = document.createElement('li');
+   statsPosts.classList.add('modal-item');
+   const statsPostsLabel = document.createElement('b');
+   statsPostsLabel.textContent = "Posts: ";
+   statsPosts.appendChild(statsPostsLabel);
+   const statsPostsValue = document.createTextNode(user.posts.length);
+   statsPosts.appendChild(statsPostsValue);
+   statsList.appendChild(statsPosts);
+   //// # of Upvotes
+   const statsUpvotes = document.createElement('li');
+   statsUpvotes.classList.add('modal-item');
+   const statsUpvotesLabel = document.createElement('b');
+   statsUpvotesLabel.textContent = "Upvotes: ";
+   statsUpvotes.appendChild(statsUpvotesLabel);
+   let upvotesCounter = 0;
+   for (const postId of user.posts) {
+      const post = await getPost(postId);
+      upvotesCounter += post.meta.upvotes.length;
+   }
+   const statsUpvotesValue = document.createTextNode(upvotesCounter);
+   statsUpvotes.appendChild(statsUpvotesValue);
+   statsList.appendChild(statsUpvotes);
+   //// # of Followers
+   const statsFollowers = document.createElement('li');
+   statsFollowers.classList.add('modal-item');
+   const statsFollowersLabel = document.createElement('b');
+   statsFollowersLabel.textContent = "Followers: ";
+   statsFollowers.appendChild(statsFollowersLabel);
+   const statsFollowersValue = document.createTextNode(user.followed_num);
+   statsFollowers.appendChild(statsFollowersValue);
+   statsList.appendChild(statsFollowers);
+   /// Following
+   const following = document.createElement('h4');
+   following.textContent = "Following";
+   modalBody.appendChild(following);
+   const overflowContainer = document.createElement('div');
+   overflowContainer.classList.add('modal-overflow');
+   const followingList = document.createElement('ul');
+   followingList.classList.add('modal-list');
+   for (const userId of user.following) {
+      const item = document.createElement('li');
+      item.classList.add('modal-item');
+      const followedUser = await getUser(userId);
+      item.textContent = followedUser.name;
+      followingList.appendChild(item);
+   }
+   overflowContainer.appendChild(followingList);
+   modalBody.appendChild(overflowContainer);
+   content.appendChild(modalBody);
+   profileModal.appendChild(content);
+
+   return profileModal;
+}
+
 ////////////////
 // UPVOTES MODAL
 ////////////////
-export async function createUpvotesModal(apiUrl, postId) {
+export async function createUpvotesModal(postId) {
    const upvotesModal = document.createElement('div');
    upvotesModal.classList.add('modal');
    upvotesModal.id = "upvotesModal";
@@ -204,7 +450,6 @@ export async function createUpvotesModal(apiUrl, postId) {
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
-   modalHeader.appendChild(document.getElementById('logo').cloneNode(true));
    const heading = document.createElement('h2');
    heading.textContent = "UPVOTES";
    modalHeader.appendChild(heading);
@@ -216,10 +461,11 @@ export async function createUpvotesModal(apiUrl, postId) {
    const list = document.createElement('ul');
    list.classList.add('modal-list');
    /// Get post
-   const post = await getPost(apiUrl, postId);
+   const post = await getPost(postId);
    for (const id of post.meta.upvotes) {
-      const user = await getUser(apiUrl, id);
+      const user = await getUser(id);
       const item = document.createElement('li');
+      item.classList.add('modal-item');
       item.textContent = user.name;
       list.appendChild(item);
    }
@@ -230,30 +476,77 @@ export async function createUpvotesModal(apiUrl, postId) {
    return upvotesModal;
 }
 
-function getPost(apiUrl, postId) {
-   const options = {
-      headers: {
-         'accept': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      }
-   }
-   return new Promise(resolve => {
-      fetch(`${apiUrl}/post/?id=${postId}`, options)
-      .then(res => res.json())
-      .then(data => resolve(data));
-   });
-}
+/////////////////
+// COMMENTS MODAL
+/////////////////
+export async function createCommentsModal(postId) {
+   const commentsModal = document.createElement('div');
+   commentsModal.classList.add('modal');
+   commentsModal.id = "commentsModal";
+   commentsModal.style.display = 'block';
 
-function getUser(apiUrl, userId) {
-   const options = {
-      headers: {
-         'accept': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      }
+   const content = document.createElement('div');
+   content.classList.add('modal-content');
+
+   // Header
+   const modalHeader = document.createElement('div');
+   modalHeader.classList.add('container');
+   const close = document.createElement('span');
+   close.id = "closeUpvotesModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   modalHeader.appendChild(close);
+   const heading = document.createElement('h2');
+   heading.textContent = "COMMENTS";
+   modalHeader.appendChild(heading);
+   content.appendChild(modalHeader);
+
+   // Body
+   const modalBody = document.createElement('div');
+   modalBody.classList.add('container');
+   const list = document.createElement('ul');
+   list.id = "commentsList";
+   list.classList.add('modal-list');
+   /// Get post
+   const post = await getPost(postId);
+   /// Get post's comments
+   const comments = post.comments;
+   comments.sort((a, b) => a.published - b.published);
+   for (const c of comments) {
+      const item = document.createElement('li');
+      item.classList.add('modal-item');
+      const itemAuthor = document.createElement('b');
+      itemAuthor.textContent = `${c.author}: `;
+      item.appendChild(itemAuthor);
+      const itemComment = document.createTextNode(c.comment);
+      item.appendChild(itemComment);
+      list.appendChild(item);
    }
-   return new Promise(resolve => {
-      fetch(`${apiUrl}/user/?id=${userId}`, options)
-      .then(res => res.json())
-      .then(data => resolve(data));
-   }); 
+   modalBody.appendChild(list);
+   /// Add a comment
+   const form = document.createElement('form');
+   form.id = "commentForm";
+   //// Text
+   const commentInput = document.createElement('textarea');
+   commentInput.setAttribute('required', '');
+   commentInput.classList.add('text');
+   commentInput.style.resize = "vertical";
+   commentInput.placeholder = "Enter Comment";
+   commentInput.name = "text";
+   commentInput.rows = "3";
+   form.appendChild(commentInput);
+   //// Button
+   const commentButton = document.createElement('button');
+   commentButton.id = "commentButton";
+   commentButton.type = "submit";
+   commentButton.classList.add('button');
+   commentButton.classList.add('button-secondary');
+   commentButton.textContent = "COMMENT";
+   form.appendChild(commentButton);
+
+   modalBody.appendChild(form);
+   content.appendChild(modalBody);
+   commentsModal.appendChild(content);
+
+   return commentsModal;
 }
