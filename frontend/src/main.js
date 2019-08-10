@@ -1,14 +1,24 @@
-import {createNavBar, createFeed} from './create.js';
-import {createLogInModal, createSignUpModal, createUpvotesModal} from './modals.js';
+import {createNavBar, createMainPage, getFeed} from './create.js';
+import {toBase64} from './helpers.js';
+import {createLogInModal, createSignUpModal} from './modals.js';
+import {createUpvotesModal, createCommentsModal, 
+        createImageModal, createProfileModal, createNewPostModal} from './modals.js';
 
 /////////////////
 // AUTH VARIABLES
 /////////////////
 localStorage.clear();
-localStorage.setItem('userLoggedIn', 'false')
+localStorage.setItem('userLoggedIn', 'false');
 localStorage.setItem('userToken', '');
+localStorage.setItem('userName', '');
 
 function initApp(apiUrl) {
+   // Save apiUrl
+   localStorage.setItem('apiUrl', apiUrl);
+
+   // Feed page number
+   let feedPage = 0;
+   let pageLoaded = false;
 
    document.getElementById("root").innerHTML = "";
 
@@ -16,7 +26,7 @@ function initApp(apiUrl) {
    // CREATE MAIN PAGE COMPONENTS
    //////////////////////////////
 
-   const pageElements = [createNavBar(), createFeed(apiUrl)];
+   const pageElements = [createNavBar(), createMainPage()];
 
    Promise.all(pageElements).then(([createdNavBar, createdFeed]) => {
 
@@ -34,9 +44,35 @@ function initApp(apiUrl) {
       // CREATE FOOTER
       const footer = document.createElement('footer');
       document.getElementById("root").appendChild(footer);
-   
-   
-   
+      
+
+      /////////
+      // IMAGES
+      /////////
+      document.getElementsByName("thumbnail").forEach(t => {
+         t.addEventListener('click', (e) => {
+            const postId = e.target.parentNode.parentNode.dataset.idPost;
+            createImageModal(postId)
+            .then(imageModal => {
+               document.getElementById("root").appendChild(imageModal);
+               document.body.style.overflow = "hidden";
+
+               document.getElementById("closeImageModal").addEventListener('click', () => {
+                  imageModal.remove();
+                  document.body.style.overflow = "visible";
+               });
+               // Close when grey area is clicked
+               imageModal.onclick = (e) => {
+                  if (e.target == imageModal) {
+                     imageModal.remove();
+                     document.body.style.overflow = "visible";
+                  }
+               };
+            });
+         });
+      });
+
+      
       if (localStorage.getItem('userLoggedIn') == 'true') {
          /////////
          // LOGOUT
@@ -44,9 +80,25 @@ function initApp(apiUrl) {
          document.getElementById("logoutButton").addEventListener('click', () => {
             localStorage.setItem('userLoggedIn', 'false')
             localStorage.setItem('userToken', '');
+            localStorage.setItem('userName', '');
             initApp(apiUrl);
          });
-   
+         
+         //////////////////
+         // INFINITE SCROLL
+         //////////////////
+         window.onscroll = () => {
+            const feed = document.getElementById('feed');
+            if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight && !pageLoaded) {
+               feedPage++;
+               getFeed(feedPage*10)
+               .then(f => {
+                  if (f.length == 0) pageLoaded = true;
+                  else f.forEach(post => feed.appendChild(post));
+               });
+            }
+         };
+
          /////////
          // VOTING
          /////////
@@ -60,7 +112,7 @@ function initApp(apiUrl) {
                const currVotes = Number(votes.childNodes[1].dataset.idUpvotes);
 
                if (v.dataset.voted === 'yes') {
-                  vote(apiUrl, id, 'DELETE')
+                  vote(id, 'DELETE')
                   .then(outcome => {
                      if (outcome == 'success') {
                         // Toggle
@@ -73,7 +125,7 @@ function initApp(apiUrl) {
                      }
                   });
                } else {
-                  vote(apiUrl, id, 'PUT')
+                  vote(id, 'PUT')
                   .then(outcome => {
                      if (outcome == 'success') {
                         // Toggle
@@ -95,7 +147,7 @@ function initApp(apiUrl) {
          document.getElementsByName("upvotesCount").forEach(u => {
             u.addEventListener('click', (e) => {
                const postId = e.target.parentNode.parentNode.dataset.idPost;
-               createUpvotesModal(apiUrl, postId)
+               createUpvotesModal(postId)
                .then(upvotesModal => {
                   document.getElementById("root").appendChild(upvotesModal);
                   document.body.style.overflow = "hidden";
@@ -113,6 +165,111 @@ function initApp(apiUrl) {
                   };
                });
             });
+         });
+
+         ///////////
+         // COMMENTS
+         ///////////
+         document.getElementsByName("comments").forEach(c => {
+            c.addEventListener('click', (e) => {
+               const postId = e.target.parentNode.parentNode.parentNode.dataset.idPost;
+               createCommentsModal(postId)
+               .then(commentsModal => {
+                  document.getElementById("root").appendChild(commentsModal);
+                  document.body.style.overflow = "hidden";
+   
+                  document.getElementById("closeUpvotesModal").addEventListener('click', () => {
+                     commentsModal.remove();
+                     document.body.style.overflow = "visible";
+                  });
+                  // Close when grey area is clicked
+                  commentsModal.onclick = (e) => {
+                     if (e.target == commentsModal) {
+                        commentsModal.remove();
+                        document.body.style.overflow = "visible";
+                     }
+                  };
+                  // Send comment
+                  const commentForm = document.getElementById('commentForm');
+                  commentForm.addEventListener('submit', (e) => {
+                     e.preventDefault();
+
+                     comment(postId, commentForm.text.value)
+                     .then(outcome => {
+                        if (outcome == 'success') {
+                           // Create list item with comment
+                           const item = document.createElement('li');
+                           item.classList.add('modal-item');
+                           const itemAuthor = document.createElement('b');
+                           itemAuthor.textContent = `${localStorage.getItem('userName')}: `;
+                           item.appendChild(itemAuthor);
+                           const itemComment = document.createTextNode(commentForm.text.value);
+                           item.appendChild(itemComment);
+                           // Append to modal
+                           document.getElementById('commentsList').appendChild(item);
+                           // Clear text field
+                           commentForm.reset();
+                        }
+                     });
+                  });
+               });
+            });
+         });
+
+         //////////
+         // PROFILE
+         //////////
+         document.getElementById('profile').addEventListener('click', () => {
+            createProfileModal()
+            .then(profileModal => {
+               document.getElementById("root").appendChild(profileModal);
+               document.body.style.overflow = "hidden";
+
+               document.getElementById("closeProfileModal").addEventListener('click', () => {
+                  profileModal.remove();
+                  document.body.style.overflow = "visible";
+               });
+               // Close when grey area is clicked
+               profileModal.onclick = (e) => {
+                  if (e.target == profileModal) {
+                     profileModal.remove();
+                     document.body.style.overflow = "visible";
+                  }
+               };
+            });
+         });
+
+         ///////
+         // POST
+         ///////
+         const newPostModal = createNewPostModal();
+         document.getElementById("root").appendChild(newPostModal);
+         document.getElementById("closeNewPostModal").addEventListener('click', () => {
+            newPostModal.style.display = 'none';
+            document.getElementById("newPostForm").reset();
+            document.getElementById("newPostError").textContent = "";
+            document.body.style.overflow = "visible";
+         });
+         document.getElementById("postButton").addEventListener('click', () => {
+            newPostModal.style.display = 'block';
+            document.body.style.overflow = "hidden";
+         });
+
+         // Close when grey area is clicked
+         newPostModal.onclick = (e) => {
+            if (e.target == newPostModal) {
+               newPostModal.style.display = "none";
+               document.getElementById("newPostForm").reset();
+               document.getElementById('newPostError').textContent = "";
+               document.body.style.overflow = "visible";
+            }
+         };
+
+         // Submit login
+         const newPostForm = document.getElementById('newPostForm');
+         newPostForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            sendNewPost(newPostForm);
          });
 
       } else {
@@ -146,7 +303,7 @@ function initApp(apiUrl) {
          const loginForm = document.getElementById('loginForm');
          loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            authLogin(apiUrl, loginForm);
+            authLogin(loginForm);
          });
    
          //////////
@@ -179,22 +336,15 @@ function initApp(apiUrl) {
          const signupForm = document.getElementById('signupForm');
          signupForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            authSignup(apiUrl, signupForm);
-         });
-   
-         /////////
-         // VOTING
-         /////////
-         document.getElementsByName('voteUp').forEach(v => {
-            v.addEventListener('click', () => {
-               document.getElementById('signupButton').click();
-            });
+            authSignup(signupForm);
          });
       }
    });
 }
 
-function authLogin(apiUrl, form) {
+function authLogin(form) {
+   const apiUrl = localStorage.getItem('apiUrl');
+
    const payload = {
       username: form.username.value,
       password: form.password.value
@@ -216,6 +366,7 @@ function authLogin(apiUrl, form) {
             .then(t => {
                localStorage.setItem('userLoggedIn', 'true');
                localStorage.setItem('userToken', t.token);
+               localStorage.setItem('userName', payload.username);
                // Refresh feed
                initApp(apiUrl);
             });
@@ -231,7 +382,9 @@ function authLogin(apiUrl, form) {
    });
 }
 
-function authSignup(apiUrl, form) {
+function authSignup(form) {
+   const apiUrl = localStorage.getItem('apiUrl');
+
    const payload = {
       username: form.username.value,
       password: form.password.value,
@@ -259,11 +412,56 @@ function authSignup(apiUrl, form) {
             errorMessage.textContent = "Username Taken";
             break;
       }
-
    });
 }
 
-function vote(apiUrl, id, method) {
+function sendNewPost(form) {
+   const apiUrl = localStorage.getItem('apiUrl');
+
+   let getImage = new Promise((resolve, reject) => {
+      const pic = form.image.files[0];
+      if (pic) {
+         toBase64(pic).then(pic64 => resolve(pic64.substr(22)));
+      } else {
+         resolve(null);
+      }
+   });
+
+   getImage.then(pic => {
+      let payload = {
+         title: form.title.value,
+         text: form.text.value,
+         subseddit: form.subseddit.value,
+         image: pic
+      }
+      const options = {
+         method: 'POST',
+         headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Token ${localStorage.getItem('userToken')}`
+         },
+         body: JSON.stringify(payload)
+      }
+
+      fetch(`${apiUrl}/post/`, options)
+      .then(res => {
+         const errorMessage = document.getElementById('newPostError');
+         errorMessage.textContent = '';
+         switch (res.status) {
+            case 200:
+               document.getElementById("closeNewPostModal").click();
+               initApp(apiUrl);
+               break;
+            case 400:
+               console.error("Malformed Request / Image could not be processed:" + res);
+               break;
+         }
+      });
+   });
+}
+
+function vote(postId, method) {
+   const apiUrl = localStorage.getItem('apiUrl');
    const options = {
       method: method,
       headers: {
@@ -273,7 +471,43 @@ function vote(apiUrl, id, method) {
    }
 
    return new Promise(resolve => {
-      fetch(`${apiUrl}/post/vote?id=${id}`, options)
+      fetch(`${apiUrl}/post/vote?id=${postId}`, options)
+      .then(res => {
+         switch (res.status) {
+            case 200:
+               resolve('success');
+               break;
+            case 400:
+               console.error("Malformed Request:" + res);
+               resolve('failure');
+               break;
+            case 403:
+               console.error("Invalid Auth Token" + res);
+               resolve('failure');
+               break;
+         }
+         resolve('failure');
+      });
+   });
+}
+
+function comment(postId, comment) {
+   const apiUrl = localStorage.getItem('apiUrl');
+   let payload = {
+      comment: comment
+   }
+   const options = {
+      method: 'PUT',
+      headers: {
+         'accept': 'application/json',
+         'Content-Type': 'application/json',
+         'Authorization': `Token ${localStorage.getItem('userToken')}`
+      },
+      body: JSON.stringify(payload)
+   }
+
+   return new Promise(resolve => {
+      fetch(`${apiUrl}/post/comment?id=${postId}`, options)
       .then(res => {
          switch (res.status) {
             case 200:
