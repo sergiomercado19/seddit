@@ -13,4 +13,6 @@ Date     Start	Stop	Activity	   Comments
 10/08/19 23:00 01:00 Coding      Added the ability to write comments and show live updates on them, as well as upvotes
 11/08/19 10:00 12:00 Coding      Incorporated the ability to Update profile
 12/08/19 2:00  4:00  Coding      Added a drop down menu to switch between 3 feeds: Trending, Curated and Mine
-12/08/19 10:00 12:30 Coding      Added the ability to delete and update posts.
+12/08/19 10:00 12:30 Coding      Added the ability to delete and update posts
+12/08/19 14:00 18:30 Refactoring Restructured the front end to accomodate for User Pages
+12/08/19 19:00 21:30 Coding      Implemented User Pages as a modal with infinite scrolling

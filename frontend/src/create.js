@@ -1,4 +1,4 @@
-import {getTime, fetchFeed, getUser} from './helpers.js';
+import {getTime, chooseFeed, fetchFeed, getUser} from './helpers.js';
 
 export function createNavBar() {
    // Check if user is logged in
@@ -22,19 +22,19 @@ export function createNavBar() {
       const navbar = document.createElement('ul');
       navbar.classList.add('nav');
       
-      //// item0: searchbar
-      const navItem0 = document.createElement('li');
-      navItem0.classList.add('nav-item');
-      const searchbar = document.createElement('input');
-      searchbar.setAttribute('data-id-search', '');
-      searchbar.classList.add('text');
-      searchbar.id = "search";
-      searchbar.type = "search";
-      searchbar.placeholder = "Search Seddit";
-      navItem0.appendChild(searchbar);
-      navbar.appendChild(navItem0);
-      
       if (userLoggedIn) {
+         //// item0: searchbar
+         const navItem0 = document.createElement('li');
+         navItem0.classList.add('nav-item');
+         const searchbar = document.createElement('input');
+         searchbar.setAttribute('data-id-search', '');
+         searchbar.classList.add('text');
+         searchbar.id = "search";
+         searchbar.type = "search";
+         searchbar.placeholder = "Search Seddit";
+         navItem0.appendChild(searchbar);
+         navbar.appendChild(navItem0);
+
          //// item3: Log Out button
          const navItem3 = document.createElement('li');
          navItem3.classList.add('nav-item');
@@ -96,12 +96,13 @@ export function createNavBar() {
 export function createMainPage() {
    // Check if user is logged in
    const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true';
-   // Get feedType
-   const feedType = localStorage.getItem('feedType');
+   // Get selectedFeed
+   const selectedFeed = localStorage.getItem('selectedFeed');
 
    return new Promise(resolve => {
       const main = document.createElement('ul');
       main.id = "feed";
+      main.classList.add('feed');
       main.setAttribute('data-id-feed', '');
    
       // Heading
@@ -118,29 +119,29 @@ export function createMainPage() {
          /// MODE toggle
          const dropdown = document.createElement('div');
          dropdown.classList.add('dropdown');
-         dropdown.id = "feedTypeDropdown"
+         dropdown.id = "selectedFeedDropdown"
          const dropdownButton = document.createElement('button');
-         dropdownButton.id = "feedTypeButton";
+         dropdownButton.id = "selectedFeedButton";
          dropdownButton.classList.add('button');
          dropdownButton.classList.add('button-secondary');
-         dropdownButton.textContent = `${feedType} ▼`;
+         dropdownButton.textContent = `${selectedFeed} ▼`;
          dropdown.appendChild(dropdownButton);
          const dropdownOptions = document.createElement('div');
-         dropdownOptions.id = "feedTypeOptions";
+         dropdownOptions.id = "selectedFeedOptions";
          dropdownOptions.classList.add('dropdown-content');
-         if (feedType !== "Trending") {
+         if (selectedFeed !== "Trending") {
             const option1 = document.createElement('a');
             option1.href = "#Trending";
             option1.textContent = "Trending";
             dropdownOptions.appendChild(option1);
          }
-         if (feedType !== "Curated") {
+         if (selectedFeed !== "Curated") {
             const option2 = document.createElement('a');
             option2.href = "#Curated";
             option2.textContent = "Curated";
             dropdownOptions.appendChild(option2);
          }
-         if (feedType !== "Mine") {
+         if (selectedFeed !== "Mine") {
             const option3 = document.createElement('a');
             option3.href = "#Mine";
             option3.textContent = "Mine";
@@ -158,7 +159,7 @@ export function createMainPage() {
       }
       main.appendChild(heading);
    
-      getFeed(0, feedType)
+      getFeed(chooseFeed(), 0)
       .then(f => {
          f.forEach(post => main.appendChild(post));
          resolve(main);
@@ -167,14 +168,15 @@ export function createMainPage() {
    });
 }
 
-export async function getFeed(start) {
+export async function getFeed(feedType, start) {
 
-   const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true';
+   const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true'
+                        && !feedType.includes("UserPage");
    const user = (userLoggedIn) ? await getUser() : undefined;
    let feed = [];
 
    // Append posts
-   await fetchFeed(start)
+   await fetchFeed(feedType, start)
    .then(data => {
       for (const p of data.posts) {
          // Create post list element
@@ -219,11 +221,17 @@ export async function getFeed(start) {
          b.classList.add('break');
          b.textContent = '•';
          contentInfo.appendChild(b);
-         const contentAuthor = document.createElement('label');
-         contentAuthor.classList.add('post-author');
+         const contentExtra = document.createElement('label');
+         contentExtra.classList.add('post-extra');
+         contentExtra.appendChild(document.createTextNode("Posted by "));
+         const contentAuthor = document.createElement('a');
          contentAuthor.setAttribute('data-id-author', p.meta.author);
-         contentAuthor.textContent = `Posted by u/${p.meta.author} on ${getTime(p.meta.published)}`;
-         contentInfo.appendChild(contentAuthor);
+         if (userLoggedIn) contentAuthor.classList.add('post-author');
+         contentAuthor.name = "postAuthor";
+         contentAuthor.textContent = `u/${p.meta.author}`;
+         contentExtra.appendChild(contentAuthor);
+         contentExtra.appendChild(document.createTextNode(` on ${getTime(p.meta.published)}`));
+         contentInfo.appendChild(contentExtra);
          content.appendChild(contentInfo);
          /// Title
          const contentTitle = document.createElement('h4');
