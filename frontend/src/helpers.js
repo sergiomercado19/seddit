@@ -33,18 +33,34 @@ export function getUser(userId=null) {
    }); 
 }
 
-export function fetchFeed(start=0) {
+export async function fetchFeed(start=0) {
    const apiUrl = localStorage.getItem('apiUrl');
-   if (localStorage.getItem('userLoggedIn') == 'true') {
+   const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true';
+   const feedType = localStorage.getItem('feedType');
+
+   if (userLoggedIn && feedType === "Curated") {
       const options = {
          headers: {
             'accept': 'application/json',
             'Authorization': `Token ${localStorage.getItem('userToken')}`
          }
       }
-      return fetch(`${apiUrl}/user/feed?p=${start}&n=10`, options);
+      return await fetch(`${apiUrl}/user/feed?p=${start}&n=10`, options)
+                   .then(res => res.json());
+   } else if (userLoggedIn && feedType === "Mine") {
+      const user = await getUser();
+      const postsAll = user.posts.reverse();
+      let postsToGet = [];
+      for (let i = start; i < start + 10; i++) {
+         if (!postsAll[i]) break;
+         postsToGet.push(postsAll[i]);
+      }
+      let data = {};
+      data["posts"] = await Promise.all(postsToGet.map(postId => getPost(postId)));
+      return data;
    } else {
-      return fetch(`${apiUrl}/post/public`);
+      return await fetch(`${apiUrl}/post/public`)
+                   .then(res => res.json());
    }
 }
 

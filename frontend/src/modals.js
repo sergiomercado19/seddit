@@ -261,9 +261,9 @@ export function createNewPostModal() {
    imageInput.name = "image";
    imageInput.accept = "image/png";
    /// Error box
-   const signupError = document.createElement('div');
-   signupError.id = "newPostError";
-   signupError.style.color = "red";
+   const newPostError = document.createElement('div');
+   newPostError.id = "newPostError";
+   newPostError.style.color = "red";
    /// Submit
    const space = document.createElement('div');
    space.style.height = "15px";
@@ -281,7 +281,7 @@ export function createNewPostModal() {
    modalBody.appendChild(subsedditInput);
    modalBody.appendChild(imageLabel);
    modalBody.appendChild(imageInput);
-   modalBody.appendChild(signupError);
+   modalBody.appendChild(newPostError);
    modalBody.appendChild(space);
    modalBody.appendChild(submit);
 
@@ -290,6 +290,98 @@ export function createNewPostModal() {
    newPostModal.appendChild(content);
 
    return newPostModal;
+}
+
+//////////////////
+// EDIT POST MODAL
+//////////////////
+export async function createEditPostModal(postId) {
+   const post = await getPost(postId);
+
+   const editPostModal = document.createElement('div');
+   editPostModal.classList.add('modal');
+   editPostModal.id = "editPostModal";
+   editPostModal.style.display = 'block';
+
+   const content = document.createElement('div');
+   content.classList.add('modal-content');
+
+   const form = document.createElement('form');
+   form.style.paddingRight = "25%";
+   form.id = "editPostForm";
+   
+   // Header
+   const modalHeader = document.createElement('div');
+   modalHeader.classList.add('container');
+   const close = document.createElement('span');
+   close.id = "closeEditPostModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   modalHeader.appendChild(close);
+   const heading = document.createElement('h2');
+   heading.textContent = "EDIT POST";
+   modalHeader.appendChild(heading);
+   form.appendChild(modalHeader);
+
+   // Body
+   const modalBody = document.createElement('div');
+   modalBody.classList.add('container');
+   /// Title
+   const titleLabel = document.createElement('label');
+   titleLabel.style.fontWeight = "bold";
+   titleLabel.textContent = "Title";
+   const titleInput = document.createElement('input');
+   titleInput.setAttribute('required', '');
+   titleInput.classList.add('text');
+   titleInput.type = "text";
+   titleInput.placeholder = "Enter Title";
+   titleInput.value = post.title;
+   titleInput.name = "title";
+   /// Text
+   const textLabel = document.createElement('label');
+   textLabel.style.fontWeight = "bold";
+   textLabel.textContent = "Text";
+   const textInput = document.createElement('textarea');
+   textInput.setAttribute('required', '');
+   textInput.classList.add('text');
+   textInput.style.resize = "vertical";
+   textInput.placeholder = "Enter Text";
+   textInput.value = post.text;
+   textInput.name = "text";
+   /// Image
+   const imageLabel = document.createElement('label')
+   imageLabel.style.fontWeight = "bold";
+   imageLabel.textContent = "Image ";
+   const imageInput = document.createElement('input');
+   imageInput.id = "uploadedImage";
+   imageInput.style.margin = "8px 0px";
+   imageInput.type = "file";
+   imageInput.placeholder = "Upload Image";
+   imageInput.name = "image";
+   imageInput.accept = "image/png";
+   /// Submit
+   const space = document.createElement('div');
+   space.style.height = "15px";
+   const submit = document.createElement('button');
+   submit.classList.add('button');
+   submit.classList.add('button-secondary');
+   submit.type = "submit";
+   submit.textContent = "EDIT ✎";
+
+   modalBody.appendChild(titleLabel);
+   modalBody.appendChild(titleInput);
+   modalBody.appendChild(textLabel);
+   modalBody.appendChild(textInput);
+   modalBody.appendChild(imageLabel);
+   modalBody.appendChild(imageInput);
+   modalBody.appendChild(space);
+   modalBody.appendChild(submit);
+
+   form.appendChild(modalBody);
+   content.appendChild(form);
+   editPostModal.appendChild(content);
+
+   return editPostModal;
 }
 
 //////////////
@@ -358,20 +450,30 @@ export async function createProfileModal() {
    const heading = document.createElement('h2');
    heading.textContent = user.name.toUpperCase();
    modalHeader.appendChild(heading);
+   const edit = document.createElement('button');
+   edit.id = "editProfileButton"
+   edit.textContent = "Edit ✎";
+   edit.classList.add('button');
+   edit.classList.add('button-primary');
+   edit.style.position = "absolute";
+   modalHeader.appendChild(edit);
    content.appendChild(modalHeader);
 
    // Body
    const modalBody = document.createElement('div');
    modalBody.classList.add('container');
+   /// Username
    const username = document.createElement('h4');
    username.textContent = `Username: ${user.username}`;
    modalBody.appendChild(username);
+   /// Email
    const email = document.createElement('h4');
    email.textContent = `Email: ${user.email}`;
    modalBody.appendChild(email);
    /// Stats
    const stats = document.createElement('h4');
-   stats.textContent = "Stats";
+   stats.textContent = "Stats:";
+   stats.style.marginBottom = "0px";
    modalBody.appendChild(stats);
    const statsList = document.createElement('ul');
    statsList.classList.add('modal-list');
@@ -407,9 +509,11 @@ export async function createProfileModal() {
    const statsFollowersValue = document.createTextNode(user.followed_num);
    statsFollowers.appendChild(statsFollowersValue);
    statsList.appendChild(statsFollowers);
+   modalBody.appendChild(statsList);
    /// Following
    const following = document.createElement('h4');
-   following.textContent = "Following";
+   following.textContent = "Following:";
+   following.style.marginBottom = "0px";
    modalBody.appendChild(following);
    const overflowContainer = document.createElement('div');
    overflowContainer.classList.add('modal-overflow');
@@ -419,7 +523,7 @@ export async function createProfileModal() {
       const item = document.createElement('li');
       item.classList.add('modal-item');
       const followedUser = await getUser(userId);
-      item.textContent = followedUser.name;
+      item.textContent = followedUser.username;
       followingList.appendChild(item);
    }
    overflowContainer.appendChild(followingList);
@@ -428,6 +532,96 @@ export async function createProfileModal() {
    profileModal.appendChild(content);
 
    return profileModal;
+}
+
+/////////////////////
+// EDIT PROFILE MODAL
+/////////////////////
+export async function createEditProfileModal() {
+   const user = await getUser();
+
+   const editProfileModal = document.createElement('div');
+   editProfileModal.classList.add('modal');
+   editProfileModal.id = "editProfileModal";
+   editProfileModal.style.display = 'block';
+
+   const content = document.createElement('div');
+   content.classList.add('modal-content');
+
+   const form = document.createElement('form');
+   form.style.paddingRight = "25%";
+   form.id = "editProfileForm";
+   
+   // Header
+   const modalHeader = document.createElement('div');
+   modalHeader.classList.add('container');
+   const close = document.createElement('span');
+   close.id = "closeEditProfileModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   modalHeader.appendChild(close);
+   const heading = document.createElement('h2');
+   heading.textContent = "EDIT PROFILE";
+   modalHeader.appendChild(heading);
+   form.appendChild(modalHeader);
+
+   // Body
+   const modalBody = document.createElement('div');
+   modalBody.classList.add('container');
+   /// Name
+   const nameLabel = document.createElement('label');
+   nameLabel.style.fontWeight = "bold";
+   nameLabel.textContent = "Name";
+   const nameInput = document.createElement('input');
+   nameInput.setAttribute('required', '');
+   nameInput.classList.add('text');
+   nameInput.type = "text";
+   nameInput.placeholder = "Enter Name";
+   nameInput.value = user.name;
+   nameInput.name = "name";
+   /// Email
+   const emailLabel = document.createElement('label');
+   emailLabel.style.fontWeight = "bold";
+   emailLabel.textContent = "Email";
+   const emailInput = document.createElement('input');
+   emailInput.setAttribute('required', '');
+   emailInput.classList.add('text');
+   emailInput.type = "text";
+   emailInput.placeholder = "Enter Email";
+   emailInput.value = user.email;
+   emailInput.name = "email";
+   /// Password
+   const pwdLabel = document.createElement('label')
+   pwdLabel.style.fontWeight = "bold";
+   pwdLabel.textContent = "Password";
+   const pwdInput = document.createElement('input');
+   pwdInput.classList.add('text');
+   pwdInput.type = "password";
+   pwdInput.placeholder = "Unchanged";
+   pwdInput.name = "password";
+   /// Submit
+   const space = document.createElement('div');
+   space.style.height = "15px";
+   const edit = document.createElement('button');
+   edit.classList.add('button');
+   edit.classList.add('button-secondary');
+   edit.type = "submit";
+   edit.textContent = "EDIT ✎";
+
+   modalBody.appendChild(nameLabel);
+   modalBody.appendChild(nameInput);
+   modalBody.appendChild(emailLabel);
+   modalBody.appendChild(emailInput);
+   modalBody.appendChild(pwdLabel);
+   modalBody.appendChild(pwdInput);
+   modalBody.appendChild(space);
+   modalBody.appendChild(edit);
+
+   form.appendChild(modalBody);
+   content.appendChild(form);
+   editProfileModal.appendChild(content);
+
+   return editProfileModal;
 }
 
 ////////////////
@@ -466,7 +660,7 @@ export async function createUpvotesModal(postId) {
       const user = await getUser(id);
       const item = document.createElement('li');
       item.classList.add('modal-item');
-      item.textContent = user.name;
+      item.textContent = user.username;
       list.appendChild(item);
    }
    modalBody.appendChild(list);

@@ -96,6 +96,8 @@ export function createNavBar() {
 export function createMainPage() {
    // Check if user is logged in
    const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true';
+   // Get feedType
+   const feedType = localStorage.getItem('feedType');
 
    return new Promise(resolve => {
       const main = document.createElement('ul');
@@ -113,6 +115,39 @@ export function createMainPage() {
          heading.appendChild(postPopular);
       }
       if (userLoggedIn) {
+         /// MODE toggle
+         const dropdown = document.createElement('div');
+         dropdown.classList.add('dropdown');
+         dropdown.id = "feedTypeDropdown"
+         const dropdownButton = document.createElement('button');
+         dropdownButton.id = "feedTypeButton";
+         dropdownButton.classList.add('button');
+         dropdownButton.classList.add('button-secondary');
+         dropdownButton.textContent = `${feedType} ▼`;
+         dropdown.appendChild(dropdownButton);
+         const dropdownOptions = document.createElement('div');
+         dropdownOptions.id = "feedTypeOptions";
+         dropdownOptions.classList.add('dropdown-content');
+         if (feedType !== "Trending") {
+            const option1 = document.createElement('a');
+            option1.href = "#Trending";
+            option1.textContent = "Trending";
+            dropdownOptions.appendChild(option1);
+         }
+         if (feedType !== "Curated") {
+            const option2 = document.createElement('a');
+            option2.href = "#Curated";
+            option2.textContent = "Curated";
+            dropdownOptions.appendChild(option2);
+         }
+         if (feedType !== "Mine") {
+            const option3 = document.createElement('a');
+            option3.href = "#Mine";
+            option3.textContent = "Mine";
+            dropdownOptions.appendChild(option3);
+         }
+         dropdown.appendChild(dropdownOptions);
+         heading.appendChild(dropdown);
          /// POST button
          const postButton = document.createElement('button');
          postButton.id = "postButton";
@@ -120,12 +155,10 @@ export function createMainPage() {
          postButton.classList.add('button-secondary');
          postButton.textContent = "NEW POST";
          heading.appendChild(postButton);
-         /// MODE toggle
-         // TODO
       }
       main.appendChild(heading);
    
-      getFeed(0)
+      getFeed(0, feedType)
       .then(f => {
          f.forEach(post => main.appendChild(post));
          resolve(main);
@@ -137,11 +170,11 @@ export function createMainPage() {
 export async function getFeed(start) {
 
    const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true';
+   const user = (userLoggedIn) ? await getUser() : undefined;
    let feed = [];
 
-   //// Append posts
+   // Append posts
    await fetchFeed(start)
-   .then(res => res.json())
    .then(data => {
       for (const p of data.posts) {
          // Create post list element
@@ -149,10 +182,10 @@ export async function getFeed(start) {
          post.classList.add('post');
          post.setAttribute('data-id-post', p.id);
 
-         /// Votes
+         // Votes
          const votes = document.createElement('div');
          votes.classList.add('vote');
-         //// VoteUp
+         /// VoteUp
          if (userLoggedIn) {
             const voteUp = document.createElement('span');
             voteUp.classList.add('vote-element');
@@ -163,7 +196,7 @@ export async function getFeed(start) {
             voteUp.appendChild(arrowUp);
             votes.appendChild(voteUp);
          }
-         //// Count
+         /// Count
          const count = document.createElement('span');
          count.setAttribute('data-id-upvotes', p.meta.upvotes.length);
          count.classList.add('vote-element');
@@ -172,10 +205,10 @@ export async function getFeed(start) {
          votes.appendChild(count);
          post.appendChild(votes);
 
-         /// Content
+         // Content
          const content = document.createElement('div');
          content.classList.add('content');
-         //// Info
+         /// Info
          const contentInfo = document.createElement('p');
          contentInfo.style.margin = "0px 0px 5px 0px";
          const contentSubseddit = document.createElement('label');
@@ -192,35 +225,49 @@ export async function getFeed(start) {
          contentAuthor.textContent = `Posted by u/${p.meta.author} on ${getTime(p.meta.published)}`;
          contentInfo.appendChild(contentAuthor);
          content.appendChild(contentInfo);
-         //// Title
+         /// Title
          const contentTitle = document.createElement('h4');
          contentTitle.classList.add('post-title');
          contentTitle.setAttribute('data-id-title', p.title);
          contentTitle.textContent = p.title;
          content.appendChild(contentTitle);
-         //// Description
+         /// Description
          const contentDescription = document.createElement('p');
          contentDescription.classList.add('post-description');
          contentDescription.classList.add('alt-text');
          contentDescription.textContent = p.text;
          content.appendChild(contentDescription);
-         //// Options
+         /// Options
          if (userLoggedIn) {
-            ///// Comments
             const contentOptions = document.createElement('p');
-            contentOptions.classList.add('post-options');
-            const contentComments = document.createElement('label');
-            contentComments.classList.add('post-comment');
-            contentComments.setAttribute('name', 'comments');
-            if ("comments" in p) contentComments.textContent =`Show ${p.comments.length} comments`;
-            else contentComments.textContent = "Add a comment";
-            contentOptions.appendChild(contentComments);
+            contentOptions.classList.add('post-footer');
+            //// Comments
+            const optionComment = document.createElement('label');
+            optionComment.classList.add('post-option');
+            optionComment.setAttribute('name', 'postComment');
+            if ("comments" in p && p.comments.length > 0) optionComment.textContent =`Show ${p.comments.length} comments`;
+            else optionComment.textContent = "Add a comment";
+            contentOptions.appendChild(optionComment);
+            //// Edit/delete post
+            if (user.posts.includes(p.id)) {
+               const optionEdit = document.createElement('label');
+               optionEdit.classList.add('post-option');
+               optionEdit.setAttribute('name', 'postEdit');
+               optionEdit.textContent = "Edit ✎";
+               contentOptions.appendChild(optionEdit);
+
+               const optionDelete = document.createElement('label');
+               optionDelete.classList.add('post-option');
+               optionDelete.setAttribute('name', 'postDelete');
+               optionDelete.textContent = "Delete 🗑";
+               contentOptions.appendChild(optionDelete);
+            }
             content.appendChild(contentOptions);
          }
 
          post.appendChild(content);
 
-         /// Thumbnail
+         // Thumbnail
          if (p.thumbnail !== null && p.thumbnail !== "") {
             const thumbnail = document.createElement('div');
             thumbnail.classList.add('thumbnail');

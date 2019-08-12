@@ -1,8 +1,9 @@
 import {createNavBar, createMainPage, getFeed} from './create.js';
 import {toBase64} from './helpers.js';
 import {createLogInModal, createSignUpModal} from './modals.js';
-import {createUpvotesModal, createCommentsModal, 
-        createImageModal, createProfileModal, createNewPostModal} from './modals.js';
+import {createUpvotesModal, createCommentsModal} from './modals.js';
+import {createProfileModal, createEditProfileModal} from './modals.js';
+import {createNewPostModal, createEditPostModal, createImageModal} from './modals.js';
 
 /////////////////
 // AUTH VARIABLES
@@ -11,11 +12,27 @@ localStorage.clear();
 localStorage.setItem('userLoggedIn', 'false');
 localStorage.setItem('userToken', '');
 localStorage.setItem('userName', '');
+localStorage.setItem('feedType', 'Trending');
+// Valid URL fragments
+const validFeedFragments = ["#Trending", "#Curated", "#Mine"];
+const validProfileFragments = /^#profile=([0-9]+)$/;
 
 function initApp(apiUrl) {
    // Save apiUrl
    localStorage.setItem('apiUrl', apiUrl);
-
+   
+   ///////////////////////////
+   // HANDLE URL FRAGMENTATION
+   ///////////////////////////
+   window.onhashchange = () => {
+      const hash = window.location.hash;
+      if (validFeedFragments.includes(hash)) {
+         // FEED TYPE
+         localStorage.setItem('feedType', hash.substring(1));
+         initApp(apiUrl);
+      } 
+   }
+   
    // Feed page number
    let feedPage = 0;
    let pageLoaded = false;
@@ -25,7 +42,6 @@ function initApp(apiUrl) {
    //////////////////////////////
    // CREATE MAIN PAGE COMPONENTS
    //////////////////////////////
-
    const pageElements = [createNavBar(), createMainPage()];
 
    Promise.all(pageElements).then(([createdNavBar, createdFeed]) => {
@@ -81,6 +97,7 @@ function initApp(apiUrl) {
             localStorage.setItem('userLoggedIn', 'false')
             localStorage.setItem('userToken', '');
             localStorage.setItem('userName', '');
+            localStorage.setItem('feedType', 'Trending');
             initApp(apiUrl);
          });
          
@@ -89,8 +106,11 @@ function initApp(apiUrl) {
          //////////////////
          window.onscroll = () => {
             const feed = document.getElementById('feed');
-            if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight && !pageLoaded) {
+            if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight
+               && localStorage.getItem('feedType') != "Trending"
+               && !pageLoaded) {
                feedPage++;
+               console.log(feedPage);
                getFeed(feedPage*10)
                .then(f => {
                   if (f.length == 0) pageLoaded = true;
@@ -98,6 +118,13 @@ function initApp(apiUrl) {
                });
             }
          };
+
+         ////////////
+         // FEED TYPE
+         ////////////
+         document.getElementById('feedTypeButton').addEventListener('click', () => {
+            document.getElementById("feedTypeOptions").classList.toggle("dropdown-show");
+         });
 
          /////////
          // VOTING
@@ -167,12 +194,12 @@ function initApp(apiUrl) {
             });
          });
 
-         ///////////
-         // COMMENTS
-         ///////////
-         document.getElementsByName("comments").forEach(c => {
-            c.addEventListener('click', (e) => {
-               const postId = e.target.parentNode.parentNode.parentNode.dataset.idPost;
+         ///////////////
+         // COMMENT POST
+         ///////////////
+         document.getElementsByName("postComment").forEach(pc => {
+            pc.addEventListener('click', (openEvent) => {
+               const postId = openEvent.target.parentNode.parentNode.parentNode.dataset.idPost;
                createCommentsModal(postId)
                .then(commentsModal => {
                   document.getElementById("root").appendChild(commentsModal);
@@ -191,9 +218,8 @@ function initApp(apiUrl) {
                   };
                   // Send comment
                   const commentForm = document.getElementById('commentForm');
-                  commentForm.addEventListener('submit', (e) => {
-                     e.preventDefault();
-
+                  commentForm.addEventListener('submit', (sendEvent) => {
+                     sendEvent.preventDefault();
                      comment(postId, commentForm.text.value)
                      .then(outcome => {
                         if (outcome == 'success') {
@@ -212,6 +238,71 @@ function initApp(apiUrl) {
                         }
                      });
                   });
+               });
+            });
+         });
+
+         ////////////
+         // EDIT POST
+         ////////////
+         document.getElementsByName("postEdit").forEach(pe => {
+            pe.addEventListener('click', (openEvent) => {
+               const postId = openEvent.target.parentNode.parentNode.parentNode.dataset.idPost;
+               createEditPostModal(postId)
+               .then(editPostModal => {
+                  document.getElementById("root").appendChild(editPostModal);
+                  document.body.style.overflow = "hidden";
+   
+                  document.getElementById("closeEditPostModal").addEventListener('click', () => {
+                     editPostModal.remove();
+                     document.body.style.overflow = "visible";
+                  });
+                  // Close when grey area is clicked
+                  editPostModal.onclick = (e) => {
+                     if (e.target == editPostModal) {
+                        editPostModal.remove();
+                        document.body.style.overflow = "visible";
+                     }
+                  };
+                  // Send changes
+                  const editPostForm = document.getElementById('editPostForm');
+                  editPostForm.addEventListener('submit', (sendEvent) => {
+                     sendEvent.preventDefault();
+                     editPost(postId, editPostForm)
+                     .then(outcome => {
+                        if (outcome == 'success') {
+                           // Show edited post
+                           const title = openEvent.target.parentNode.parentNode.childNodes[1];
+                           title.setAttribute('data-id-title', editPostForm.title.value);
+                           title.textContent = editPostForm.title.value;
+                           const text = openEvent.target.parentNode.parentNode.childNodes[2];
+                           text.textContent = editPostForm.text.value;
+                           const pic = editPostForm.image.files[0];
+                           if (pic) toBase64(pic).then(pic64 => {
+                              const image = openEvent.target.parentNode.parentNode.parentNode.childNodes[2].childNodes[0];
+                              image.src = pic64;
+                           });
+                           
+                        }
+                     });
+                  });
+               });
+            });
+         });
+
+         //////////////
+         // DELETE POST
+         //////////////
+         document.getElementsByName("postDelete").forEach(pd => {
+            pd.addEventListener('click', (e) => {
+               const postId = e.target.parentNode.parentNode.parentNode.dataset.idPost;
+               deletePost(postId)
+               .then(outcome => {
+                  if (outcome == 'success') {
+                     // Remove deleted post
+                     const deletedPost = e.target.parentNode.parentNode.parentNode;
+                     deletedPost.remove();
+                  }
                });
             });
          });
@@ -236,6 +327,32 @@ function initApp(apiUrl) {
                      document.body.style.overflow = "visible";
                   }
                };
+               // Edit profile
+               document.getElementById("editProfileButton").addEventListener('click', () => {
+                  profileModal.remove();
+                  createEditProfileModal()
+                  .then(editProfileModal => {
+                     document.getElementById("root").appendChild(editProfileModal);
+
+                     document.getElementById("closeEditProfileModal").addEventListener('click', () => {
+                        editProfileModal.remove();
+                        document.body.style.overflow = "visible";
+                     });
+                     // Close when grey area is clicked
+                     editProfileModal.onclick = (e) => {
+                        if (e.target == editProfileModal) {
+                           editProfileModal.remove();
+                           document.body.style.overflow = "visible";
+                        }
+                     };
+                     // Submit update
+                     const editProfileForm = document.getElementById('editProfileForm');
+                     editProfileForm.addEventListener('submit', (e) => {
+                        e.preventDefault();
+                        editUser(editProfileForm);
+                     });
+                  });
+               });
             });
          });
 
@@ -344,6 +461,11 @@ function initApp(apiUrl) {
 
 function authLogin(form) {
    const apiUrl = localStorage.getItem('apiUrl');
+   let feedType;
+   if (validFeedFragments.includes(window.location.hash))
+      feedType = window.location.hash.substring(1);
+   else
+      feedType = "Trending";
 
    const payload = {
       username: form.username.value,
@@ -367,6 +489,7 @@ function authLogin(form) {
                localStorage.setItem('userLoggedIn', 'true');
                localStorage.setItem('userToken', t.token);
                localStorage.setItem('userName', payload.username);
+               localStorage.setItem('feedType', feedType);
                // Refresh feed
                initApp(apiUrl);
             });
@@ -415,10 +538,46 @@ function authSignup(form) {
    });
 }
 
+function editUser(form) {
+   const apiUrl = localStorage.getItem('apiUrl');
+
+   const payload = {
+      email: form.email.value,
+      name: form.name.value
+   }
+   if (form.password.value != "") payload["password"] = form.password.value;
+   const options = {
+      method: 'PUT',
+      headers: {
+         'accept': 'application/json',
+         'Content-Type': 'application/json',
+         'Authorization': `Token ${localStorage.getItem('userToken')}`
+      },
+      body: JSON.stringify(payload)
+   }
+
+   fetch(`${apiUrl}/user/`, options)
+   .then(res => {
+      switch (res.status) {
+         case 200:
+            document.getElementById("closeEditProfileModal").click();
+            localStorage.setItem('userName', form.name.value);
+            initApp(apiUrl);
+            break;
+         case 400:
+            console.error("Malformed user object:" + res);
+            break;
+         case 403:
+            console.error("Invalid Auth Token" + res);
+            break;
+      }
+   });
+}
+
 function sendNewPost(form) {
    const apiUrl = localStorage.getItem('apiUrl');
 
-   let getImage = new Promise((resolve, reject) => {
+   let getImage = new Promise(resolve => {
       const pic = form.image.files[0];
       if (pic) {
          toBase64(pic).then(pic64 => resolve(pic64.substr(22)));
@@ -456,6 +615,89 @@ function sendNewPost(form) {
                console.error("Malformed Request / Image could not be processed:" + res);
                break;
          }
+      });
+   });
+}
+
+function editPost(postId, form) {
+   const apiUrl = localStorage.getItem('apiUrl');
+
+   let getImage = new Promise(resolve => {
+      const pic = form.image.files[0];
+      if (pic) {
+         toBase64(pic).then(pic64 => resolve(pic64.substr(22)));
+      } else {
+         resolve(null);
+      }
+   });
+
+   return new Promise(resolve => {
+      getImage.then(pic => {
+         const payload = {
+            title: form.title.value,
+            text: form.text.value,
+            image: pic
+         }
+         const options = {
+            method: 'PUT',
+            headers: {
+               'accept': 'application/json',
+               'Content-Type': 'application/json',
+               'Authorization': `Token ${localStorage.getItem('userToken')}`
+            },
+            body: JSON.stringify(payload)
+         }
+      
+         fetch(`${apiUrl}/post/?id=${postId}`, options)
+         .then(res => {
+            switch (res.status) {
+               case 200:
+                  document.getElementById("closeEditPostModal").click();
+                  resolve('success');
+                  break;
+               case 400:
+                  console.error("Malformed user object:" + res);
+                  resolve('failure');
+                  break;
+               case 403:
+                  console.error("Invalid Auth Token" + res);
+                  resolve('failure');
+                  break;
+            }
+            resolve('failure');
+         });
+      });
+   });
+}
+
+function deletePost(postId) {
+   const apiUrl = localStorage.getItem('apiUrl');
+
+   return new Promise(resolve => {
+      const options = {
+         method: 'DELETE',
+         headers: {
+            'accept': 'application/json',
+            'Authorization': `Token ${localStorage.getItem('userToken')}`
+         },
+      }
+
+      fetch(`${apiUrl}/post/?id=${postId}`, options)
+      .then(res => {
+         switch (res.status) {
+            case 200:
+               resolve('success');
+               break;
+            case 400:
+               console.error("Malformed user object:" + res);
+               resolve('failure');
+               break;
+            case 403:
+               console.error("Invalid Auth Token" + res);
+               resolve('failure');
+               break;
+         }
+         resolve('failure');
       });
    });
 }
