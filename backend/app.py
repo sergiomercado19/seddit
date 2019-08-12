@@ -1,4 +1,4 @@
-import os
+import os, sys
 from flask import Flask
 from flask_restplus import Api
 from flask_cors import CORS
@@ -29,3 +29,4 @@ if 'HOST' in os.environ:
     print('*** python3 frontend_server.py http://{}:{}'.format(os.environ['HOST'], os.environ['PORT']))
     print('***')
     print()
+    sys.stdout.flush()
