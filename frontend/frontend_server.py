@@ -8,7 +8,7 @@
 
 from http.server import HTTPServer, SimpleHTTPRequestHandler
 from random import randint as rand, choice
-import base64, os, string, sys
+import base64, os, signal, string, sys
 
 PASSWORD_FILE = 'password.txt'
 
@@ -101,6 +101,7 @@ def create_backend_url_js(url):
         sys.exit(1)
 
 if __name__ == '__main__':
+    signal.signal(signal.SIGINT, lambda signum, frame: sys.exit(1))
     if not os.path.exists('index.html'):
         print("are you running frontend_server.py in the frontend directory?", file=sys.stderr)
         sys.exit(1)
