@@ -1,9 +1,19 @@
-import {createNavBar, createMainPage, getFeed} from './create.js';
+//////////
+// IMPORTS
+//////////
 import {toBase64, chooseFeed} from './helpers.js';
-import {createLogInModal, createSignUpModal, createUserPageModal} from './modals.js';
-import {createUpvotesModal, createCommentsModal} from './modals.js';
-import {createProfileModal, createEditProfileModal} from './modals.js';
-import {createNewPostModal, createEditPostModal, createImageModal} from './modals.js';
+import {createNavBar, createMainPage, getFeed} from './create.js';
+// Event listeners
+import {setLoginListeners, setSignupListeners} from './eventListeners/authentication.js'
+// Modals
+import {createLogInModal, createSignUpModal} from './modals/authentication.js';
+import {createNewPostModal, createEditPostModal} from './modals/posting.js';
+import {createUpvotesModal, createCommentsModal, createImageModal} from './modals/feed.js';
+import {createProfileModal, createEditProfileModal, createUserPageModal} from './modals/profile.js';
+// API callers
+import {authLogin, authSignup} from './apiCallers/auth.js'
+import {editUser, follow} from './apiCallers/user.js'
+import {newPost, editPost, deletePost, vote, comment} from './apiCallers/post.js'
 
 /////////////////
 // AUTH VARIABLES
@@ -30,6 +40,10 @@ function initApp(apiUrl) {
          // FEED TYPE
          localStorage.setItem('selectedFeed', hash.substring(1));
          initApp(apiUrl);
+      } else if (validProfileFragments.test(hash)) {
+         // USER PAGES
+         const userId = hash.match(validProfileFragments)[1];
+         
       }
    }
    
@@ -369,8 +383,7 @@ function initApp(apiUrl) {
                deletePost(postId)
                .then(outcome => {
                   if (outcome == 'success') {
-                     // Remove deleted post
-                     const deletedPost = e.target.parentNode.parentNode.parentNode;
+                     // Remove deleted post by refreshing
                      initApp(apiUrl);
                   }
                });
@@ -419,7 +432,9 @@ function initApp(apiUrl) {
                      const editProfileForm = document.getElementById('editProfileForm');
                      editProfileForm.addEventListener('submit', (e) => {
                         e.preventDefault();
-                        editUser(editProfileForm);
+                        editUser(editProfileForm).then(outcome => {
+                           if (outcome == 'success') initApp(apiUrl);
+                        });
                      });
                   });
                });
@@ -456,65 +471,33 @@ function initApp(apiUrl) {
          const newPostForm = document.getElementById('newPostForm');
          newPostForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            sendNewPost(newPostForm);
+            newPost(newPostForm).then(outcome => {
+               if (outcome == 'success') initApp(apiUrl);
+            });
          });
 
       } else {
-         /////////
          // LOG IN
          /////////
          const loginModal = createLogInModal();
          document.getElementById("root").appendChild(loginModal);
-         document.getElementById("closeLoginModal").addEventListener('click', () => {
-            loginModal.style.display = 'none';
-            document.getElementById("loginForm").reset();
-            document.getElementById("loginError").textContent = "";
-            document.body.style.overflow = "visible";
-         });
-         document.getElementById("loginButton").addEventListener('click', () => {
-            loginModal.style.display = 'block';
-            document.body.style.overflow = "hidden";
-         });
-         // Close when grey area is clicked
-         loginModal.onclick = (e) => {
-            if (e.target == loginModal) {
-               loginModal.style.display = "none";
-               document.getElementById("loginForm").reset();
-               document.getElementById('loginError').textContent = "";
-               document.body.style.overflow = "visible";
-            }
-         };
+         // Add listeners
+         setLoginListeners();
          // Submit login
          const loginForm = document.getElementById('loginForm');
          loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            authLogin(loginForm);
+            authLogin(loginForm).then(outcome => {
+               if (outcome == 'success') initApp(apiUrl);
+            });
          });
    
-         //////////
          // SIGN UP
          //////////
          const signupModal = createSignUpModal();
          document.getElementById("root").appendChild(signupModal);
-         document.getElementById("closeSignupModal").addEventListener('click', () => {
-            signupModal.style.display = 'none';
-            document.getElementById("signupForm").reset();
-            document.getElementById('signupError').textContent = "";
-            document.body.style.overflow = "visible";
-         });
-         document.getElementById("signupButton").addEventListener('click', () => {
-            signupModal.style.display = 'block';
-            document.body.style.overflow = "hidden";
-         });
-         // Close when grey area is clicked
-         signupModal.onclick = (e) => {
-            if (e.target == signupModal) {
-               signupModal.style.display = "none";
-               document.getElementById("signupForm").reset();
-               document.getElementById('signupError').textContent = "";
-               document.body.style.overflow = "visible";
-            }
-         };
+         // Add listeners
+         setSignupListeners();
          // Submit signup
          const signupForm = document.getElementById('signupForm');
          signupForm.addEventListener('submit', (e) => {
@@ -522,347 +505,6 @@ function initApp(apiUrl) {
             authSignup(signupForm);
          });
       }
-   });
-}
-
-function authLogin(form) {
-   const apiUrl = localStorage.getItem('apiUrl');
-   let selectedFeed;
-   if (validFeedFragments.includes(window.location.hash))
-      selectedFeed = window.location.hash.substring(1);
-   else
-      selectedFeed = "Trending";
-
-   const payload = {
-      username: form.username.value,
-      password: form.password.value
-   }
-   const options = {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-   }
-
-   fetch(`${apiUrl}/auth/login`, options)
-   .then(res => {
-      const errorMessage = document.getElementById('loginError');
-      errorMessage.textContent = '';
-      switch (res.status) {
-         case 200:
-            document.getElementById("closeLoginModal").click();
-            res.json()
-            .then(t => {
-               localStorage.setItem('userLoggedIn', 'true');
-               localStorage.setItem('userToken', t.token);
-               localStorage.setItem('userName', payload.username);
-               localStorage.setItem('selectedFeed', selectedFeed);
-               // Refresh feed
-               initApp(apiUrl);
-            });
-            break;
-         case 400:
-            errorMessage.textContent = "Missing Username/Password";
-            break;
-         case 403:
-            errorMessage.textContent = "Invalid Username/Password";
-            break;
-      }
-
-   });
-}
-
-function authSignup(form) {
-   const apiUrl = localStorage.getItem('apiUrl');
-
-   const payload = {
-      username: form.username.value,
-      password: form.password.value,
-      email: form.email.value,
-      name: form.name.value
-   }
-   const options = {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify(payload)
-   }
-
-   fetch(`${apiUrl}/auth/signup`, options)
-   .then(res => {
-      const errorMessage = document.getElementById('loginError');
-      errorMessage.textContent = '';
-      switch (res.status) {
-         case 200:
-            document.getElementById("closeSignupModal").click();
-            break;
-         case 400:
-            console.error("Malformed Request:" + res);
-            break;
-         case 409:
-            errorMessage.textContent = "Username Taken";
-            break;
-      }
-   });
-}
-
-function editUser(form) {
-   const apiUrl = localStorage.getItem('apiUrl');
-
-   const payload = {
-      email: form.email.value,
-      name: form.name.value
-   }
-   if (form.password.value != "") payload["password"] = form.password.value;
-   const options = {
-      method: 'PUT',
-      headers: {
-         'accept': 'application/json',
-         'Content-Type': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      },
-      body: JSON.stringify(payload)
-   }
-
-   fetch(`${apiUrl}/user/`, options)
-   .then(res => {
-      switch (res.status) {
-         case 200:
-            document.getElementById("closeEditProfileModal").click();
-            localStorage.setItem('userName', form.name.value);
-            initApp(apiUrl);
-            break;
-         case 400:
-            console.error("Malformed user object:" + res);
-            break;
-         case 403:
-            console.error("Invalid Auth Token" + res);
-            break;
-      }
-   });
-}
-
-function sendNewPost(form) {
-   const apiUrl = localStorage.getItem('apiUrl');
-
-   let getImage = new Promise(resolve => {
-      const pic = form.image.files[0];
-      if (pic) {
-         toBase64(pic).then(pic64 => resolve(pic64.substr(22)));
-      } else {
-         resolve(null);
-      }
-   });
-
-   getImage.then(pic => {
-      let payload = {
-         title: form.title.value,
-         text: form.text.value,
-         subseddit: form.subseddit.value,
-         image: pic
-      }
-      const options = {
-         method: 'POST',
-         headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Token ${localStorage.getItem('userToken')}`
-         },
-         body: JSON.stringify(payload)
-      }
-
-      fetch(`${apiUrl}/post/`, options)
-      .then(res => {
-         const errorMessage = document.getElementById('newPostError');
-         errorMessage.textContent = '';
-         switch (res.status) {
-            case 200:
-               document.getElementById("closeNewPostModal").click();
-               initApp(apiUrl);
-               break;
-            case 400:
-               console.error("Malformed Request / Image could not be processed:" + res);
-               break;
-         }
-      });
-   });
-}
-
-function editPost(postId, form) {
-   const apiUrl = localStorage.getItem('apiUrl');
-
-   let getImage = new Promise(resolve => {
-      const pic = form.image.files[0];
-      if (pic) {
-         toBase64(pic).then(pic64 => resolve(pic64.substr(22)));
-      } else {
-         resolve(null);
-      }
-   });
-
-   return new Promise(resolve => {
-      getImage.then(pic => {
-         const payload = {
-            title: form.title.value,
-            text: form.text.value,
-            image: pic
-         }
-         const options = {
-            method: 'PUT',
-            headers: {
-               'accept': 'application/json',
-               'Content-Type': 'application/json',
-               'Authorization': `Token ${localStorage.getItem('userToken')}`
-            },
-            body: JSON.stringify(payload)
-         }
-      
-         fetch(`${apiUrl}/post/?id=${postId}`, options)
-         .then(res => {
-            switch (res.status) {
-               case 200:
-                  document.getElementById("closeEditPostModal").click();
-                  resolve('success');
-                  break;
-               case 400:
-                  console.error("Malformed user object:" + res);
-                  resolve('failure');
-                  break;
-               case 403:
-                  console.error("Invalid Auth Token" + res);
-                  resolve('failure');
-                  break;
-            }
-            resolve('failure');
-         });
-      });
-   });
-}
-
-function deletePost(postId) {
-   const apiUrl = localStorage.getItem('apiUrl');
-
-   return new Promise(resolve => {
-      const options = {
-         method: 'DELETE',
-         headers: {
-            'accept': 'application/json',
-            'Authorization': `Token ${localStorage.getItem('userToken')}`
-         },
-      }
-
-      fetch(`${apiUrl}/post/?id=${postId}`, options)
-      .then(res => {
-         switch (res.status) {
-            case 200:
-               resolve('success');
-               break;
-            case 400:
-               console.error("Malformed user object:" + res);
-               resolve('failure');
-               break;
-            case 403:
-               console.error("Invalid Auth Token" + res);
-               resolve('failure');
-               break;
-         }
-         resolve('failure');
-      });
-   });
-}
-
-function vote(postId, method) {
-   const apiUrl = localStorage.getItem('apiUrl');
-   const options = {
-      method: method,
-      headers: {
-         'accept': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      }
-   }
-
-   return new Promise(resolve => {
-      fetch(`${apiUrl}/post/vote?id=${postId}`, options)
-      .then(res => {
-         switch (res.status) {
-            case 200:
-               resolve('success');
-               break;
-            case 400:
-               console.error("Malformed Request:" + res);
-               resolve('failure');
-               break;
-            case 403:
-               console.error("Invalid Auth Token" + res);
-               resolve('failure');
-               break;
-         }
-         resolve('failure');
-      });
-   });
-}
-
-function follow(username, toggle) {
-   const apiUrl = localStorage.getItem('apiUrl');
-   const options = {
-      method: 'PUT',
-      headers: {
-         'accept': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      }
-   }
-
-   return new Promise(resolve => {
-      fetch(`${apiUrl}/user/${toggle}?username=${username}`, options)
-      .then(res => {
-         switch (res.status) {
-            case 200:
-               resolve('success');
-               break;
-            case 400:
-               console.error("Malformed Request:" + res);
-               resolve('failure');
-               break;
-            case 403:
-               console.error("Invalid Auth Token" + res);
-               resolve('failure');
-               break;
-         }
-         resolve('failure');
-      });
-   });
-}
-
-function comment(postId, comment) {
-   const apiUrl = localStorage.getItem('apiUrl');
-   let payload = {
-      comment: comment
-   }
-   const options = {
-      method: 'PUT',
-      headers: {
-         'accept': 'application/json',
-         'Content-Type': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      },
-      body: JSON.stringify(payload)
-   }
-
-   return new Promise(resolve => {
-      fetch(`${apiUrl}/post/comment?id=${postId}`, options)
-      .then(res => {
-         switch (res.status) {
-            case 200:
-               resolve('success');
-               break;
-            case 400:
-               console.error("Malformed Request:" + res);
-               resolve('failure');
-               break;
-            case 403:
-               console.error("Invalid Auth Token" + res);
-               resolve('failure');
-               break;
-         }
-         resolve('failure');
-      });
    });
 }
 
