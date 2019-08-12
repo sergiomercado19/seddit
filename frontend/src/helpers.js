@@ -1,38 +1,5 @@
-export function getPost(postId) {
-   const apiUrl = localStorage.getItem('apiUrl');
-   const options = {
-      headers: {
-         'accept': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      }
-   }
-   return new Promise(resolve => {
-      fetch(`${apiUrl}/post/?id=${postId}`, options)
-      .then(res => res.json())
-      .then(data => resolve(data));
-   });
-}
-
-export function getUser(id=null, username=null) {
-   const apiUrl = localStorage.getItem('apiUrl');
-   const options = {
-      headers: {
-         'accept': 'application/json',
-         'Authorization': `Token ${localStorage.getItem('userToken')}`
-      }
-   }
-   
-   let url;
-   if (id !== null) url = `${apiUrl}/user/?id=${id}`;
-   else if (username != null) url = `${apiUrl}/user/?username=${username}`;
-   else url = `${apiUrl}/user/`;
-
-   return new Promise(resolve => {
-      fetch(url, options)
-      .then(res => res.json())
-      .then(data => resolve(data));
-   }); 
-}
+import {getPost} from './apiCallers/post.js'
+import {getUser} from './apiCallers/user.js'
 
 export function chooseFeed() {
    const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true';
