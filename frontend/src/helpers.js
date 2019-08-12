@@ -13,7 +13,7 @@ export function getPost(postId) {
    });
 }
 
-export function getUser(userId=null) {
+export function getUser(id=null, username=null) {
    const apiUrl = localStorage.getItem('apiUrl');
    const options = {
       headers: {
@@ -23,8 +23,9 @@ export function getUser(userId=null) {
    }
    
    let url;
-   if (userId === null) url = `${apiUrl}/user/`;
-   else url = `${apiUrl}/user/?id=${userId}`;
+   if (id !== null) url = `${apiUrl}/user/?id=${id}`;
+   else if (username != null) url = `${apiUrl}/user/?username=${username}`;
+   else url = `${apiUrl}/user/`;
 
    return new Promise(resolve => {
       fetch(url, options)
@@ -33,12 +34,19 @@ export function getUser(userId=null) {
    }); 
 }
 
-export async function fetchFeed(start=0) {
-   const apiUrl = localStorage.getItem('apiUrl');
+export function chooseFeed() {
    const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true';
-   const feedType = localStorage.getItem('feedType');
+   const selectedFeed = localStorage.getItem('selectedFeed');
 
-   if (userLoggedIn && feedType === "Curated") {
+   if (userLoggedIn && selectedFeed === "Curated") return "Curated";
+   else if (userLoggedIn && selectedFeed === "Mine") return "Mine";
+   else return "Trending";
+}
+
+export async function fetchFeed(fetchType, start=0) {
+   const apiUrl = localStorage.getItem('apiUrl');
+
+   if (fetchType === "Curated") {
       const options = {
          headers: {
             'accept': 'application/json',
@@ -47,16 +55,25 @@ export async function fetchFeed(start=0) {
       }
       return await fetch(`${apiUrl}/user/feed?p=${start}&n=10`, options)
                    .then(res => res.json());
-   } else if (userLoggedIn && feedType === "Mine") {
-      const user = await getUser();
-      const postsAll = user.posts.reverse();
-      let postsToGet = [];
+   } else if (fetchType === "Mine") {
+      const user =  await getUser();
+      const postsAll = await Promise.all(user.posts.map(postId => getPost(postId)));
+      postsAll.sort((a, b) => b.meta.published - a.meta.published);
+      let data = {posts: []};
       for (let i = start; i < start + 10; i++) {
          if (!postsAll[i]) break;
-         postsToGet.push(postsAll[i]);
+         data.posts.push(postsAll[i]);
       }
-      let data = {};
-      data["posts"] = await Promise.all(postsToGet.map(postId => getPost(postId)));
+      return data;
+   } else if (fetchType.substring(0, 8) === "UserPage") {
+      const user = await getUser(fetchType.substring(9));
+      const postsAll = await Promise.all(user.posts.map(postId => getPost(postId)));
+      postsAll.sort((a, b) => b.meta.published - a.meta.published);
+      let data = {posts: []};
+      for (let i = start; i < start + 10; i++) {
+         if (!postsAll[i]) break;
+         data.posts.push(postsAll[i]);
+      }
       return data;
    } else {
       return await fetch(`${apiUrl}/post/public`)

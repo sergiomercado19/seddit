@@ -1,6 +1,7 @@
 
 .post {
    display: flex;
+   flex-direction: row;
    overflow: hidden;
    margin: 20px 0;
    background-color: white;
@@ -22,6 +23,7 @@
 .post .content {
    padding: 5px;
    width: 100%;
+   flex: 1;
    position: relative;
    display: flex;
    flex-direction: column;
@@ -52,10 +54,15 @@
    flex: 1;
 }
 
-.post-author {
+.post-extra {
    margin: 5px 0;
    font-size: 11px;
    color: var(--reddit-blue);
+}
+
+.post-author {
+   text-decoration: underline;
+   cursor: pointer;
 }
 
 .post-subseddit {

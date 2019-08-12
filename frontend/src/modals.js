@@ -1,4 +1,5 @@
-import {getPost, getUser, fetchFeed} from './helpers.js';
+import {getPost, getUser, chooseFeed, fetchFeed} from './helpers.js';
+import {getFeed} from './create.js'
 
 //////////////
 // LOGIN MODAL
@@ -184,6 +185,96 @@ export function createSignUpModal() {
    signupModal.appendChild(content);
 
    return signupModal;
+}
+
+//////////////////
+// USER PAGE MODAL
+//////////////////
+export async function createUserPageModal(author) {
+   /// Get user
+   const pageUser = await getUser(null, author);
+
+   const userPageModal = document.createElement('div');
+   userPageModal.classList.add('modal');
+   userPageModal.id = "userPageModal";
+   userPageModal.style.display = 'block';
+   userPageModal.setAttribute('data-id-page-user', pageUser.id);
+
+   const content = document.createElement('div');
+   content.classList.add('modal-content');
+   content.style.width = "1000px";
+
+   // Header
+   const modalHeader = document.createElement('div');
+   modalHeader.classList.add('container');
+   const close = document.createElement('span');
+   close.id = "closeUserPageModal";
+   close.classList.add('close');
+   close.textContent = "×";
+   modalHeader.appendChild(close);
+   const heading = document.createElement('h2');
+   heading.textContent = pageUser.name.toUpperCase();
+   modalHeader.appendChild(heading);
+   /// Info
+   const info = document.createElement('div');
+   info.classList.add('feed-header');
+   const stats = document.createElement('div');
+   const followers = document.createElement('button');
+   followers.classList.add('button');
+   followers.classList.add('button-primary');
+   followers.classList.add('button-disabled');
+   followers.textContent = `Followers: ${pageUser.followed_num}`;
+   stats.appendChild(followers);
+   const following = document.createElement('button');
+   following.classList.add('button');
+   following.classList.add('button-primary');
+   following.classList.add('button-disabled');
+   following.textContent = `Following: ${pageUser.following.length}`;
+   stats.appendChild(following);
+   info.appendChild(stats);
+   //// Follow toggle button
+   if (author !== localStorage.getItem('userName')) {
+      const follow = document.createElement('button');
+      follow.classList.add('button');
+      follow.id = "followButton"
+      // Choose toggle
+      const user = await getUser();
+      if (user.following.includes(pageUser.id)) {
+         follow.textContent = "Following ✔️";
+         follow.classList.add('button-primary');
+         follow.setAttribute('data-following', 'true');
+      } else {
+         follow.textContent = "Follow";
+         follow.classList.add('button-secondary');
+         follow.setAttribute('data-following', 'false');
+      }
+      info.appendChild(follow);
+   }
+   modalHeader.appendChild(info);
+   content.appendChild(modalHeader);
+
+   // Body
+   const modalBody = document.createElement('div');
+   modalBody.classList.add('container');
+   modalBody.classList.add('modal-overflow');
+   modalBody.id = "userPagePosts";
+   modalBody.style.maxHeight = "500px";
+
+   const main = document.createElement('ul');
+   main.id = "userPageFeed";
+   main.classList.add('feed');
+   main.setAttribute('data-id-feed', '');
+   
+   await getFeed(`UserPage=${pageUser.id}`, 0)
+   .then(f => {
+      f.forEach(post => main.appendChild(post));
+   });
+
+   modalBody.appendChild(main);
+   content.appendChild(modalBody);
+   userPageModal.appendChild(content);
+
+   return userPageModal;
 }
 
 /////////////
@@ -404,14 +495,8 @@ export async function createImageModal(postId) {
    if (localStorage.getItem('userLoggedIn') == 'true') {
       post = await getPost(postId);
    } else {
-      post = await new Promise(resolve => {
-         fetchFeed()
-         .then(res => res.json())
-         .then(data => {
-            const p = data.posts.find(p => p.id == postId);
-            resolve(p);
-         });
-      });
+      const data = await fetchFeed(chooseFeed());
+      post = data.posts.find(p => p.id == postId);
    }
 
    const image = document.createElement('img');

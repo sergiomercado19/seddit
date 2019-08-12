@@ -1,6 +1,6 @@
 import {createNavBar, createMainPage, getFeed} from './create.js';
-import {toBase64} from './helpers.js';
-import {createLogInModal, createSignUpModal} from './modals.js';
+import {toBase64, chooseFeed} from './helpers.js';
+import {createLogInModal, createSignUpModal, createUserPageModal} from './modals.js';
 import {createUpvotesModal, createCommentsModal} from './modals.js';
 import {createProfileModal, createEditProfileModal} from './modals.js';
 import {createNewPostModal, createEditPostModal, createImageModal} from './modals.js';
@@ -12,7 +12,7 @@ localStorage.clear();
 localStorage.setItem('userLoggedIn', 'false');
 localStorage.setItem('userToken', '');
 localStorage.setItem('userName', '');
-localStorage.setItem('feedType', 'Trending');
+localStorage.setItem('selectedFeed', 'Trending');
 // Valid URL fragments
 const validFeedFragments = ["#Trending", "#Curated", "#Mine"];
 const validProfileFragments = /^#profile=([0-9]+)$/;
@@ -28,9 +28,9 @@ function initApp(apiUrl) {
       const hash = window.location.hash;
       if (validFeedFragments.includes(hash)) {
          // FEED TYPE
-         localStorage.setItem('feedType', hash.substring(1));
+         localStorage.setItem('selectedFeed', hash.substring(1));
          initApp(apiUrl);
-      } 
+      }
    }
    
    // Feed page number
@@ -97,7 +97,7 @@ function initApp(apiUrl) {
             localStorage.setItem('userLoggedIn', 'false')
             localStorage.setItem('userToken', '');
             localStorage.setItem('userName', '');
-            localStorage.setItem('feedType', 'Trending');
+            localStorage.setItem('selectedFeed', 'Trending');
             initApp(apiUrl);
          });
          
@@ -107,11 +107,10 @@ function initApp(apiUrl) {
          window.onscroll = () => {
             const feed = document.getElementById('feed');
             if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight
-               && localStorage.getItem('feedType') != "Trending"
+               && localStorage.getItem('selectedFeed') != "Trending"
                && !pageLoaded) {
                feedPage++;
-               console.log(feedPage);
-               getFeed(feedPage*10)
+               getFeed(chooseFeed(), feedPage*10)
                .then(f => {
                   if (f.length == 0) pageLoaded = true;
                   else f.forEach(post => feed.appendChild(post));
@@ -122,8 +121,79 @@ function initApp(apiUrl) {
          ////////////
          // FEED TYPE
          ////////////
-         document.getElementById('feedTypeButton').addEventListener('click', () => {
-            document.getElementById("feedTypeOptions").classList.toggle("dropdown-show");
+         document.getElementById('selectedFeedButton').addEventListener('click', () => {
+            document.getElementById("selectedFeedOptions").classList.toggle("dropdown-show");
+         });
+
+         /////////////
+         // USER PAGES
+         /////////////
+         document.getElementsByName("postAuthor").forEach(a => {
+            const pageUser = a.dataset.idAuthor;
+            a.addEventListener('click', () => {
+               createUserPageModal(pageUser)
+               .then(userPageModal => {
+                  document.getElementById("root").appendChild(userPageModal);
+                  document.body.style.overflow = "hidden";
+
+                  document.getElementById("closeUserPageModal").addEventListener('click', () => {
+                     userPageModal.remove();
+                     document.body.style.overflow = "visible";
+                  });
+                  // Close when grey area is clicked
+                  userPageModal.onclick = (e) => {
+                     if (e.target == userPageModal) {
+                        userPageModal.remove();
+                        document.body.style.overflow = "visible";
+                     }
+                  };
+                  // Infinite scroll
+                  let feedUserPage = 0;
+                  let userPageLoaded = false;
+                  const userPagePosts = document.getElementById('userPagePosts');
+                  userPagePosts.onscroll = () => {
+                     const userPageFeed = document.getElementById('userPageFeed');
+                     if (userPagePosts.scrollTop === (userPagePosts.scrollHeight - userPagePosts.offsetHeight)
+                        && localStorage.getItem('selectedFeed') != "Trending"
+                        && !userPageLoaded) {
+                        feedUserPage++;
+                        const pageUserId = userPageModal.dataset.idPageUser;
+                        getFeed(`UserPage=${pageUserId}`, feedUserPage*10)
+                        .then(f => {
+                           if (f.length == 0) userPageLoaded = true;
+                           else f.forEach(post => userPageFeed.appendChild(post));
+                        });
+                     }
+                  };
+                  // Follow
+                  const followButton = document.getElementById('followButton');
+                  if (followButton != null) {
+                     followButton.addEventListener('click', (e) => {
+                        if (e.target.dataset.following === "true") {
+                           follow(pageUser, 'unfollow')
+                           .then(outcome => {
+                              if (outcome == 'success') {
+                                 e.target.textContent = "Follow";
+                                 e.target.classList.remove('button-primary');
+                                 e.target.classList.add('button-secondary');
+                                 e.target.setAttribute('data-following', 'false');
+                              }
+                           });
+                        } else {
+                           follow(pageUser, 'follow')
+                           .then(outcome => {
+                              if (outcome == 'success') {
+                                 e.target.textContent = "Following ✔️";
+                                 e.target.classList.remove('button-secondary');
+                                 e.target.classList.add('button-primary');
+                                 e.target.setAttribute('data-following', 'true');
+                              }
+                           });
+                        }
+                     });
+                  }
+               });
+            });
          });
 
          /////////
@@ -301,7 +371,7 @@ function initApp(apiUrl) {
                   if (outcome == 'success') {
                      // Remove deleted post
                      const deletedPost = e.target.parentNode.parentNode.parentNode;
-                     deletedPost.remove();
+                     initApp(apiUrl);
                   }
                });
             });
@@ -405,7 +475,6 @@ function initApp(apiUrl) {
             loginModal.style.display = 'block';
             document.body.style.overflow = "hidden";
          });
-   
          // Close when grey area is clicked
          loginModal.onclick = (e) => {
             if (e.target == loginModal) {
@@ -415,7 +484,6 @@ function initApp(apiUrl) {
                document.body.style.overflow = "visible";
             }
          };
-   
          // Submit login
          const loginForm = document.getElementById('loginForm');
          loginForm.addEventListener('submit', (e) => {
@@ -438,7 +506,6 @@ function initApp(apiUrl) {
             signupModal.style.display = 'block';
             document.body.style.overflow = "hidden";
          });
-   
          // Close when grey area is clicked
          signupModal.onclick = (e) => {
             if (e.target == signupModal) {
@@ -448,7 +515,6 @@ function initApp(apiUrl) {
                document.body.style.overflow = "visible";
             }
          };
-   
          // Submit signup
          const signupForm = document.getElementById('signupForm');
          signupForm.addEventListener('submit', (e) => {
@@ -461,11 +527,11 @@ function initApp(apiUrl) {
 
 function authLogin(form) {
    const apiUrl = localStorage.getItem('apiUrl');
-   let feedType;
+   let selectedFeed;
    if (validFeedFragments.includes(window.location.hash))
-      feedType = window.location.hash.substring(1);
+      selectedFeed = window.location.hash.substring(1);
    else
-      feedType = "Trending";
+      selectedFeed = "Trending";
 
    const payload = {
       username: form.username.value,
@@ -489,7 +555,7 @@ function authLogin(form) {
                localStorage.setItem('userLoggedIn', 'true');
                localStorage.setItem('userToken', t.token);
                localStorage.setItem('userName', payload.username);
-               localStorage.setItem('feedType', feedType);
+               localStorage.setItem('selectedFeed', selectedFeed);
                // Refresh feed
                initApp(apiUrl);
             });
@@ -714,6 +780,37 @@ function vote(postId, method) {
 
    return new Promise(resolve => {
       fetch(`${apiUrl}/post/vote?id=${postId}`, options)
+      .then(res => {
+         switch (res.status) {
+            case 200:
+               resolve('success');
+               break;
+            case 400:
+               console.error("Malformed Request:" + res);
+               resolve('failure');
+               break;
+            case 403:
+               console.error("Invalid Auth Token" + res);
+               resolve('failure');
+               break;
+         }
+         resolve('failure');
+      });
+   });
+}
+
+function follow(username, toggle) {
+   const apiUrl = localStorage.getItem('apiUrl');
+   const options = {
+      method: 'PUT',
+      headers: {
+         'accept': 'application/json',
+         'Authorization': `Token ${localStorage.getItem('userToken')}`
+      }
+   }
+
+   return new Promise(resolve => {
+      fetch(`${apiUrl}/user/${toggle}?username=${username}`, options)
       .then(res => {
          switch (res.status) {
             case 200:
