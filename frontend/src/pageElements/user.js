@@ -59,10 +59,14 @@ export function setupProfile(initApp) {
 /////////////
 export function setupUserPages() {
    document.getElementsByName("postAuthor").forEach(a => {
-      a.addEventListener('click', () => {
+      const eventFunction = () => {
          const username = a.dataset.idAuthor;
          createUserPage(null, username);
-      });
+      };
+      if (a.dataset.listening == 'no') {
+         a.addEventListener('click', eventFunction);
+         a.dataset.listening = 'yes';
+      }
    });
 }
 

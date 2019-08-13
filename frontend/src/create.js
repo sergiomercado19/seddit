@@ -186,6 +186,7 @@ export async function createFeed(feedType, start) {
          const voteUp = document.createElement('span');
          voteUp.classList.add('vote-element');
          voteUp.setAttribute('name', 'voteUp');
+         voteUp.setAttribute('data-listening', 'no');
          postUpvoted(p, voteUp);
          const arrowUp = document.createElement('i');
          arrowUp.classList.add('arrow-up');
@@ -197,6 +198,7 @@ export async function createFeed(feedType, start) {
       count.setAttribute('data-id-upvotes', p.meta.upvotes.length);
       count.classList.add('vote-element');
       count.setAttribute('name', 'upvotesCount');
+      count.setAttribute('data-listening', 'no');
       count.textContent = p.meta.upvotes.length;
       votes.appendChild(count);
       post.appendChild(votes);
@@ -220,6 +222,7 @@ export async function createFeed(feedType, start) {
       contentExtra.appendChild(document.createTextNode("Posted by "));
       const contentAuthor = document.createElement('a');
       contentAuthor.setAttribute('data-id-author', p.meta.author);
+      contentAuthor.setAttribute('data-listening', 'no');
       if (userLoggedIn) contentAuthor.classList.add('post-author');
       contentAuthor.name = "postAuthor";
       contentAuthor.textContent = `u/${p.meta.author}`;
@@ -247,6 +250,7 @@ export async function createFeed(feedType, start) {
          const optionComment = document.createElement('label');
          optionComment.classList.add('post-option');
          optionComment.setAttribute('name', 'postComment');
+         optionComment.setAttribute('data-listening', 'no');
          if ("comments" in p && p.comments.length > 0) {
             optionComment.setAttribute('data-comment-count', p.comments.length);
             optionComment.textContent =`Show ${p.comments.length} comments`;
@@ -260,12 +264,14 @@ export async function createFeed(feedType, start) {
             const optionEdit = document.createElement('label');
             optionEdit.classList.add('post-option');
             optionEdit.setAttribute('name', 'postEdit');
+            optionEdit.setAttribute('data-listening', 'no');
             optionEdit.textContent = "Edit ✎";
             contentOptions.appendChild(optionEdit);
 
             const optionDelete = document.createElement('label');
             optionDelete.classList.add('post-option');
             optionDelete.setAttribute('name', 'postDelete');
+            optionDelete.setAttribute('data-listening', 'no');
             optionDelete.textContent = "Delete 🗑";
             contentOptions.appendChild(optionDelete);
          }
@@ -278,6 +284,7 @@ export async function createFeed(feedType, start) {
          const thumbnail = document.createElement('div');
          thumbnail.classList.add('thumbnail');
          const t = document.createElement('img');
+         t.setAttribute('data-listening', 'no');
          t.name = "thumbnail";
          t.src = `data:image/png;base64,${p.thumbnail}`;
          thumbnail.appendChild(t);

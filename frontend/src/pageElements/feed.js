@@ -1,7 +1,5 @@
 import {createUpvotesModal, createCommentsModal, createImageModal} from '../modals/feed.js';
 import {vote, comment} from '../apiCallers/post.js'
-import {chooseFeed} from '../helpers.js';
-import {createFeed} from '../create.js';
 
 ////////////
 // FEED TYPE
@@ -12,31 +10,12 @@ export function setupFeedType() {
    });
 }
 
-//////////////////
-// INFINITE SCROLL
-//////////////////
-export function setupInfiniteScroll(pageData) {
-   window.onscroll = () => {
-      const feed = document.getElementById('feed');
-      if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight
-         && localStorage.getItem('selectedFeed') != "Trending"
-         && !pageData.pageLoaded) {
-         pageData.feedPage++;
-         createFeed(chooseFeed(), pageData.feedPage*10)
-         .then(f => {
-            if (f.length == 0) pageData.pageLoaded = true;
-            else f.forEach(post => feed.appendChild(post));
-         });
-      }
-   };
-}
-
 /////////
 // VOTING
 /////////
 export function setupVoting() {
    document.getElementsByName("voteUp").forEach(v => {
-      v.addEventListener('click', (e) => {
+      const eventFunction = (e) => {
          // Get post id
          let votes;
          if (e.target.nodeName == 'I') votes = e.target.parentNode.parentNode;
@@ -71,7 +50,11 @@ export function setupVoting() {
                }
             });
          }
-      });
+      };
+      if (v.dataset.listening == 'no') {
+         v.addEventListener('click', eventFunction);
+         v.dataset.listening = 'yes';
+      }
    });
 }
 
@@ -80,7 +63,7 @@ export function setupVoting() {
 //////////
 export function setupUpvotes() {
    document.getElementsByName("upvotesCount").forEach(u => {
-      u.addEventListener('click', (e) => {
+      const eventFunction = (e) => {
          const postId = e.target.parentNode.parentNode.dataset.idPost;
          createUpvotesModal(postId)
          .then(upvotesModal => {
@@ -99,7 +82,11 @@ export function setupUpvotes() {
                }
             };
          });
-      });
+      };
+      if (u.dataset.listening == 'no') {
+         u.addEventListener('click', eventFunction);
+         u.dataset.listening = 'yes';
+      }
    });
 }
 
@@ -108,7 +95,7 @@ export function setupUpvotes() {
 ///////////
 export function setupComments() {
    document.getElementsByName("postComment").forEach(pc => {
-      pc.addEventListener('click', (openEvent) => {
+      const eventFunction = (openEvent) => {
          const postId = openEvent.target.parentNode.parentNode.parentNode.dataset.idPost;
          createCommentsModal(postId)
          .then(commentsModal => {
@@ -152,7 +139,11 @@ export function setupComments() {
                });
             });
          });
-      });
+      };
+      if (pc.dataset.listening == 'no') {
+         pc.addEventListener('click', eventFunction);
+         pc.dataset.listening = 'yes';
+      }
    });
 }
 
@@ -161,7 +152,7 @@ export function setupComments() {
 /////////
 export function setupImages() {
    document.getElementsByName("thumbnail").forEach(t => {
-      t.addEventListener('click', (e) => {
+      const eventFunction = (e) => {
          const postId = e.target.parentNode.parentNode.dataset.idPost;
          createImageModal(postId)
          .then(imageModal => {
@@ -180,6 +171,10 @@ export function setupImages() {
                }
             };
          });
-      });
+      };
+      if (t.dataset.listening == 'no') {
+         t.addEventListener('click', eventFunction);
+         t.dataset.listening = 'yes';
+      }
    });
 }
