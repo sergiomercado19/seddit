@@ -67,3 +67,7 @@ export function toBase64(blob) {
       reader.readAsDataURL(blob);
    });
 }
+
+export function closeModals() {
+   document.getElementsByName("closeModal").forEach(cm => cm.click());
+}

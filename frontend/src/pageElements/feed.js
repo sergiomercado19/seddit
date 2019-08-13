@@ -1,7 +1,7 @@
 import {createUpvotesModal, createCommentsModal, createImageModal} from '../modals/feed.js';
 import {vote, comment} from '../apiCallers/post.js'
 import {chooseFeed} from '../helpers.js';
-import {getFeed} from '../create.js';
+import {createFeed} from '../create.js';
 
 ////////////
 // FEED TYPE
@@ -22,7 +22,7 @@ export function setupInfiniteScroll(pageData) {
          && localStorage.getItem('selectedFeed') != "Trending"
          && !pageData.pageLoaded) {
          pageData.feedPage++;
-         getFeed(chooseFeed(), pageData.feedPage*10)
+         createFeed(chooseFeed(), pageData.feedPage*10)
          .then(f => {
             if (f.length == 0) pageData.pageLoaded = true;
             else f.forEach(post => feed.appendChild(post));
@@ -143,6 +143,9 @@ export function setupComments() {
                      item.appendChild(itemComment);
                      // Append to modal
                      document.getElementById('commentsList').appendChild(item);
+                     // Increment commentCounter
+                     pc.dataset.commentCount++;
+                     pc.textContent =`Show ${pc.dataset.commentCount} comments`;
                      // Clear text field
                      commentForm.reset();
                   }

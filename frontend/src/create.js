@@ -157,14 +157,14 @@ export async function createMainPage() {
    }
    main.appendChild(heading);
 
-   await getFeed(chooseFeed(), 0).then(f => {
+   await createFeed(chooseFeed(), 0).then(f => {
       f.forEach(post => main.appendChild(post));
    });
    
    return main;
 }
 
-export async function getFeed(feedType, start) {
+export async function createFeed(feedType, start) {
    const userLoggedIn = localStorage.getItem('userLoggedIn') == 'true'
                         && !feedType.includes("UserPage");
    const user = (userLoggedIn) ? await getUser() : undefined;
@@ -247,8 +247,13 @@ export async function getFeed(feedType, start) {
          const optionComment = document.createElement('label');
          optionComment.classList.add('post-option');
          optionComment.setAttribute('name', 'postComment');
-         if ("comments" in p && p.comments.length > 0) optionComment.textContent =`Show ${p.comments.length} comments`;
-         else optionComment.textContent = "Add a comment";
+         if ("comments" in p && p.comments.length > 0) {
+            optionComment.setAttribute('data-comment-count', p.comments.length);
+            optionComment.textContent =`Show ${p.comments.length} comments`;
+         } else {
+            optionComment.setAttribute('data-comment-count', 0);
+            optionComment.textContent = "Add a comment";
+         }
          contentOptions.appendChild(optionComment);
          //// Edit/delete post
          if (user.posts.includes(p.id)) {
@@ -286,18 +291,8 @@ export async function getFeed(feedType, start) {
 }
 
 function postUpvoted(p, voteUp) {
-   const apiUrl = localStorage.getItem('apiUrl');
    if (localStorage.getItem('userLoggedIn') == 'true') {
-      // Make api call to get user ID
-      const options = {
-         headers: {
-            'accept': 'application/json',
-            'Authorization': `Token ${localStorage.getItem('userToken')}`
-         }
-      }
-      fetch(`${apiUrl}/user`, options)
-      .then(res => res.json())
-      .then(data => {
+      getUser().then(data => {
          if (p.meta.upvotes.includes(data.id)) {
             voteUp.setAttribute('data-voted', 'yes');
             voteUp.classList.add('vote-toggled');
@@ -306,5 +301,5 @@ function postUpvoted(p, voteUp) {
          }
       });
    }
-   voteUp.setAttribute('data-voted', 'no')
+   voteUp.setAttribute('data-voted', 'no');
 }
