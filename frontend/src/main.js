@@ -1,14 +1,21 @@
+/*
+   COMP2041 Assignment - Seddit
+   Written by Sergio Mercado Ruiz - z5161191
+   Completed on 2019-08-13
+
+ */
+
 //////////
 // IMPORTS
 //////////
-import {closeModals} from './helpers.js'
-import {createNavBar, createMainPage} from './create.js';
+import {getUser} from './apiCallers/user.js';
+import {chooseFeed, closeModals} from './helpers.js'
+import {createNavBar, createMainPage, createFeed} from './create.js';
 import {setupLogin, setupLogout, setupSignup} from './pageElements/authentication.js'
 import {setupProfile, setupUserPages, createUserPage} from './pageElements/user.js'
-import {setupFeedType, setupVoting, setupInfiniteScroll} from './pageElements/feed.js'
+import {setupFeedType, setupVoting} from './pageElements/feed.js'
 import {setupUpvotes, setupComments, setupImages} from './pageElements/feed.js'
 import {setupNewPost, setupEditPost, setupDeletePost} from './pageElements/posting.js'
-import { getUser } from './apiCallers/user.js';
 
 /////////////////////
 // INIT LOCAL STORAGE
@@ -113,9 +120,9 @@ function initApp(apiUrl) {
 
          // POSTING
          //////////
-         setupEditPost();
-         setupDeletePost(initApp);
          setupNewPost(initApp);
+         setupEditPost(initApp);
+         setupDeletePost(initApp);
 
       } else {
 
@@ -126,6 +133,36 @@ function initApp(apiUrl) {
 
       }
    });
+}
+
+//////////////////
+// INFINITE SCROLL
+//////////////////
+function setupInfiniteScroll(pageData) {
+   window.onscroll = () => {
+      const feed = document.getElementById('feed');
+      if ((window.innerHeight + window.pageYOffset) >= document.body.offsetHeight
+         && localStorage.getItem('selectedFeed') != "Trending"
+         && !pageData.pageLoaded) {
+         pageData.feedPage++;
+         createFeed(chooseFeed(), pageData.feedPage*10)
+         .then(f => {
+            if (f.length == 0) {
+               pageData.pageLoaded = true;
+            } else {
+               f.forEach(post => feed.appendChild(post));
+               // Update listeners of dynamic components
+               setupUserPages();
+               setupVoting();
+               setupUpvotes();
+               setupComments();
+               setupImages();
+               setupEditPost(initApp);
+               setupDeletePost(initApp);
+            }
+         });
+      }
+   };
 }
 
 export default initApp;

@@ -31,6 +31,7 @@ export async function createUpvotesModal(postId) {
    // Body
    const modalBody = document.createElement('div');
    modalBody.classList.add('container');
+   modalBody.classList.add('modal-overflow');
    const list = document.createElement('ul');
    list.classList.add('modal-list');
    /// Get post

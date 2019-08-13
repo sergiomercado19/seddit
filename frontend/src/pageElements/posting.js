@@ -40,9 +40,9 @@ export function setupNewPost(initApp) {
 ////////////
 // EDIT POST
 ////////////
-export function setupEditPost() {
+export function setupEditPost(initApp) {
    document.getElementsByName("postEdit").forEach(pe => {
-      pe.addEventListener('click', (openEvent) => {
+      const eventFunction = (openEvent) => {
          const postId = openEvent.target.parentNode.parentNode.parentNode.dataset.idPost;
          createEditPostModal(postId)
          .then(editPostModal => {
@@ -75,14 +75,22 @@ export function setupEditPost() {
                      text.textContent = editPostForm.text.value;
                      const pic = editPostForm.image.files[0];
                      if (pic) toBase64(pic).then(pic64 => {
-                        const image = openEvent.target.parentNode.parentNode.parentNode.childNodes[2].childNodes[0];
-                        image.src = pic64;
+                        const image = openEvent.target.parentNode.parentNode.parentNode.childNodes[2];
+                        if (image === undefined)
+                           // Reload page to show changes 
+                           initApp(localStorage.getItem('apiUrl'));
+                        else
+                           image.childNodes[0].src = pic64;
                      });
                   }
                });
             });
          });
-      });
+      };
+      if (pe.dataset.listening == 'no') {
+         pe.addEventListener('click', eventFunction);
+         pe.dataset.listening = 'yes';
+      }
    });
 }
 
@@ -91,7 +99,7 @@ export function setupEditPost() {
 //////////////
 export function setupDeletePost(initApp) {
    document.getElementsByName("postDelete").forEach(pd => {
-      pd.addEventListener('click', (e) => {
+      const eventFunction = (e) => {
          const postId = e.target.parentNode.parentNode.parentNode.dataset.idPost;
          deletePost(postId)
          .then(outcome => {
@@ -100,6 +108,10 @@ export function setupDeletePost(initApp) {
                initApp(localStorage.getItem('apiUrl'));
             }
          });
-      });
+      };
+      if (pd.dataset.listening == 'no') {
+         pd.addEventListener('click', eventFunction);
+         pd.dataset.listening = 'yes';
+      }
    });
 }
