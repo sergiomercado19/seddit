@@ -1,12 +1,14 @@
 //////////
 // IMPORTS
 //////////
+import {closeModals} from './helpers.js'
 import {createNavBar, createMainPage} from './create.js';
 import {setupLogin, setupLogout, setupSignup} from './pageElements/authentication.js'
-import {setupProfile, setupUserPage} from './pageElements/user.js'
+import {setupProfile, setupUserPages, createUserPage} from './pageElements/user.js'
 import {setupFeedType, setupVoting, setupInfiniteScroll} from './pageElements/feed.js'
 import {setupUpvotes, setupComments, setupImages} from './pageElements/feed.js'
 import {setupNewPost, setupEditPost, setupDeletePost} from './pageElements/posting.js'
+import { getUser } from './apiCallers/user.js';
 
 /////////////////////
 // INIT LOCAL STORAGE
@@ -34,10 +36,19 @@ function initApp(apiUrl) {
          // FEED TYPE
          localStorage.setItem('selectedFeed', hash.substring(1));
          initApp(apiUrl);
-      } else if (validProfileFragments.test(hash)) {
+      } else if (validProfileFragments.test(hash) 
+                 && localStorage.getItem('userLoggedIn') == 'true') {
          // USER PAGES
          const userId = hash.match(validProfileFragments)[1];
-         
+         getUser(userId).then(data => {
+            // Check if userId is valid
+            if (data != "failure") {
+               closeModals();
+               createUserPage(userId, data.username);
+            } else {
+               alert("Invalid userId from URL fragment");
+            }
+         });
       }
    }
    
@@ -48,7 +59,8 @@ function initApp(apiUrl) {
    };
 
    // Clear page contents
-   document.getElementById("root").innerHTML = "";
+   const root = document.getElementById("root");
+   while (root.lastChild) root.removeChild(root.lastChild);
 
    // Get main page elements
    const pageElements = [createNavBar(), createMainPage()];
@@ -60,18 +72,18 @@ function initApp(apiUrl) {
 
       // CREATE HEADER
       const header = createdNavBar;
-      document.getElementById("root").appendChild(header);
+      root.appendChild(header);
       
       // CREATE MAIN
       const main = document.createElement('main');
       main.setAttribute('role', 'main');
       const feed = createdFeed;
       main.append(feed);
-      document.getElementById("root").appendChild(main);
+      root.appendChild(main);
    
       // CREATE FOOTER
       const footer = document.createElement('footer');
-      document.getElementById("root").appendChild(footer);
+      root.appendChild(footer);
       
       /////////////////////
       // DYNAMIC COMPONENTS
@@ -89,7 +101,7 @@ function initApp(apiUrl) {
          // USER
          ///////
          setupProfile(initApp);
-         setupUserPage();
+         setupUserPages();
 
          // FEED
          ///////

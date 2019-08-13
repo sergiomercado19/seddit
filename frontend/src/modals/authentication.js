@@ -19,6 +19,7 @@ export function createLogInModal() {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeLoginModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
@@ -100,6 +101,7 @@ export function createSignUpModal() {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeSignupModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);

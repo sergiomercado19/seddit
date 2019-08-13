@@ -21,6 +21,7 @@ export function createNewPostModal() {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeNewPostModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
@@ -129,6 +130,7 @@ export async function createEditPostModal(postId) {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeEditPostModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);

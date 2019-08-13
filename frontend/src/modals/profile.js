@@ -1,4 +1,4 @@
-import {getFeed} from '../create.js'
+import {createFeed} from '../create.js'
 import {getPost} from '../apiCallers/post.js'
 import {getUser} from '../apiCallers/user.js'
 
@@ -22,6 +22,7 @@ export async function createProfileModal() {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeProfileModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
@@ -135,6 +136,7 @@ export async function createEditProfileModal() {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeEditProfileModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
@@ -205,9 +207,9 @@ export async function createEditProfileModal() {
 //////////////////
 // USER PAGE MODAL
 //////////////////
-export async function createUserPageModal(author) {
+export async function createUserPageModal(id, username) {
    /// Get user
-   const pageUser = await getUser(null, author);
+   const pageUser = await getUser(id, username);
 
    const userPageModal = document.createElement('div');
    userPageModal.classList.add('modal');
@@ -224,6 +226,7 @@ export async function createUserPageModal(author) {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeUserPageModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
@@ -248,7 +251,7 @@ export async function createUserPageModal(author) {
    stats.appendChild(following);
    info.appendChild(stats);
    //// Follow toggle button
-   if (author !== localStorage.getItem('userName')) {
+   if (username !== localStorage.getItem('userName')) {
       const follow = document.createElement('button');
       follow.classList.add('button');
       follow.id = "followButton"
@@ -280,7 +283,7 @@ export async function createUserPageModal(author) {
    main.classList.add('feed');
    main.setAttribute('data-id-feed', '');
    
-   await getFeed(`UserPage=${pageUser.id}`, 0).then(f => {
+   await createFeed(`UserPage=${pageUser.id}`, 0).then(f => {
       f.forEach(post => main.appendChild(post));
    });
 

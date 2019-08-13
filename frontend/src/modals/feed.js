@@ -19,6 +19,7 @@ export async function createUpvotesModal(postId) {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeUpvotesModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
@@ -65,6 +66,7 @@ export async function createCommentsModal(postId) {
    modalHeader.classList.add('container');
    const close = document.createElement('span');
    close.id = "closeUpvotesModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    modalHeader.appendChild(close);
@@ -134,6 +136,7 @@ export async function createImageModal(postId) {
 
    const close = document.createElement('span');
    close.id = "closeImageModal";
+   close.setAttribute('name', 'closeModal');
    close.classList.add('close');
    close.textContent = "×";
    imageModal.appendChild(close);

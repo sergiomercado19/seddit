@@ -1,5 +1,5 @@
-import {createProfileModal, createEditProfileModal, createUserPageModal} from '../modals/profile.js';
-import {editUser, follow} from '../apiCallers/user.js'
+import { createProfileModal, createEditProfileModal, createUserPageModal } from '../modals/profile.js';
+import { editUser, follow } from '../apiCallers/user.js'
 
 //////////
 // PROFILE
@@ -10,7 +10,7 @@ export function setupProfile(initApp) {
       .then(profileModal => {
          document.getElementById("root").appendChild(profileModal);
          document.body.style.overflow = "hidden";
-   
+
          document.getElementById("closeProfileModal").addEventListener('click', () => {
             profileModal.remove();
             document.body.style.overflow = "visible";
@@ -28,7 +28,7 @@ export function setupProfile(initApp) {
             createEditProfileModal()
             .then(editProfileModal => {
                document.getElementById("root").appendChild(editProfileModal);
-   
+
                document.getElementById("closeEditProfileModal").addEventListener('click', () => {
                   editProfileModal.remove();
                   document.body.style.overflow = "visible";
@@ -57,72 +57,79 @@ export function setupProfile(initApp) {
 /////////////
 // USER PAGES
 /////////////
-export function setupUserPage() {
+export function setupUserPages() {
    document.getElementsByName("postAuthor").forEach(a => {
-      const pageUser = a.dataset.idAuthor;
       a.addEventListener('click', () => {
-         createUserPageModal(pageUser)
-         .then(userPageModal => {
-            document.getElementById("root").appendChild(userPageModal);
-            document.body.style.overflow = "hidden";
+         const username = a.dataset.idAuthor;
+         createUserPage(null, username);
+      });
+   });
+}
 
-            document.getElementById("closeUserPageModal").addEventListener('click', () => {
-               userPageModal.remove();
-               document.body.style.overflow = "visible";
+//////////////////////////
+// CREATE SINGLE USER PAGE
+//////////////////////////
+export function createUserPage(id, username) {
+   createUserPageModal(id, username)
+   .then(userPageModal => {
+      document.getElementById("root").appendChild(userPageModal);
+      document.body.style.overflow = "hidden";
+
+      document.getElementById("closeUserPageModal").addEventListener('click', () => {
+         userPageModal.remove();
+         document.body.style.overflow = "visible";
+      });
+      // Close when grey area is clicked
+      userPageModal.onclick = (e) => {
+         if (e.target == userPageModal) {
+            userPageModal.remove();
+            document.body.style.overflow = "visible";
+         }
+      };
+      // Infinite scroll
+      let feedUserPage = 0;
+      let userPageLoaded = false;
+      const userPagePosts = document.getElementById('userPagePosts');
+      userPagePosts.onscroll = () => {
+         const userPageFeed = document.getElementById('userPageFeed');
+         if (userPagePosts.scrollTop === (userPagePosts.scrollHeight - userPagePosts.offsetHeight)
+            && localStorage.getItem('selectedFeed') != "Trending"
+            && !userPageLoaded) {
+            feedUserPage++;
+            const pageUserId = userPageModal.dataset.idPageUser;
+            createFeed(`UserPage=${pageUserId}`, feedUserPage * 10)
+            .then(f => {
+               if (f.length == 0) userPageLoaded = true;
+               else f.forEach(post => userPageFeed.appendChild(post));
             });
-            // Close when grey area is clicked
-            userPageModal.onclick = (e) => {
-               if (e.target == userPageModal) {
-                  userPageModal.remove();
-                  document.body.style.overflow = "visible";
-               }
-            };
-            // Infinite scroll
-            let feedUserPage = 0;
-            let userPageLoaded = false;
-            const userPagePosts = document.getElementById('userPagePosts');
-            userPagePosts.onscroll = () => {
-               const userPageFeed = document.getElementById('userPageFeed');
-               if (userPagePosts.scrollTop === (userPagePosts.scrollHeight - userPagePosts.offsetHeight)
-                  && localStorage.getItem('selectedFeed') != "Trending"
-                  && !userPageLoaded) {
-                  feedUserPage++;
-                  const pageUserId = userPageModal.dataset.idPageUser;
-                  getFeed(`UserPage=${pageUserId}`, feedUserPage*10)
-                  .then(f => {
-                     if (f.length == 0) userPageLoaded = true;
-                     else f.forEach(post => userPageFeed.appendChild(post));
-                  });
-               }
-            };
-            // Follow
-            const followButton = document.getElementById('followButton');
-            if (followButton != null) {
-               followButton.addEventListener('click', (e) => {
-                  if (e.target.dataset.following === "true") {
-                     follow(pageUser, 'unfollow')
-                     .then(outcome => {
-                        if (outcome == 'success') {
-                           e.target.textContent = "Follow";
-                           e.target.classList.remove('button-primary');
-                           e.target.classList.add('button-secondary');
-                           e.target.setAttribute('data-following', 'false');
-                        }
-                     });
-                  } else {
-                     follow(pageUser, 'follow')
-                     .then(outcome => {
-                        if (outcome == 'success') {
-                           e.target.textContent = "Following ✔️";
-                           e.target.classList.remove('button-secondary');
-                           e.target.classList.add('button-primary');
-                           e.target.setAttribute('data-following', 'true');
-                        }
-                     });
+         }
+      };
+      // Follow
+      const followButton = document.getElementById('followButton');
+      if (followButton != null) {
+         followButton.addEventListener('click', (e) => {
+            if (e.target.dataset.following === "true") {
+               follow(username, 'unfollow')
+               .then(outcome => {
+                  if (outcome == 'success') {
+                     e.target.textContent = "Follow";
+                     e.target.classList.remove('button-primary');
+                     e.target.classList.add('button-secondary');
+                     e.target.setAttribute('data-following', 'false');
+                  }
+               });
+            } else {
+               follow(username, 'follow')
+               .then(outcome => {
+                  if (outcome == 'success') {
+                     e.target.textContent = "Following ✔️";
+                     e.target.classList.remove('button-secondary');
+                     e.target.classList.add('button-primary');
+                     e.target.setAttribute('data-following', 'true');
                   }
                });
             }
          });
-      });
+      }
    });
 }

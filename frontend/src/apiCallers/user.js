@@ -13,7 +13,20 @@ export async function getUser(id=null, username=null) {
    else if (username != null) url = `${apiUrl}/user/?username=${username}`;
    else url = `${apiUrl}/user/`;
 
-   return await fetch(url, options).then(res => res.json());
+   const res = await fetch(url, options)
+   switch (res.status) {
+      case 200:
+         return await res.json();
+      case 400:
+         console.error("Malformed Request:" + res);
+         return "failure";
+      case 403:
+         console.error("Invalid Auth Token" + res);
+         return "failure";
+      default:
+         return "failure";
+   }
+
 }
 
 export async function editUser(form) {
