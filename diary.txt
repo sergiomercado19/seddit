@@ -16,3 +16,5 @@ Date     Start	Stop	Activity	   Comments
 12/08/19 10:00 12:30 Coding      Added the ability to delete and update posts
 12/08/19 14:00 18:30 Refactoring Restructured the front end to accomodate for User Pages
 12/08/19 19:00 21:30 Coding      Implemented User Pages as a modal with infinite scrolling
+12/08/19 22:00 00:00 Refactoring Made all functions with promises inside async functions to simplify the code
+13/08/19 9:00  12:00 Clean-up    Abstracted the setup of dynamic components (i.e. eventListeners) from main.js
