@@ -1,7 +1,12 @@
-<!--
-    DO NOT CHANGE THIS FILE - IT MAY BE UPDATED DURING THE ASSIGNMENT
--->
-## Seddit - Introduction
+# Seddit
+
+Seddit is a university assignment consisting of writing the frontend of a content aggregator website using only vanilla JavaScript. That's right, *only* vanilla JavaScript, not even HTML (except for the bare minimum).
+
+The layout of this website is largely inspired by Reddit's layout. I managed to complete all of the **Level 1** and **Level 2** features, most of the **Level 3** features and some **Level 4** features.
+
+This assignment was a great opportunity to learn JavaScript and web development, ranging from DOM manipulation to promises. It was all done without the added complexity of a framework (e.g. React, Vue, Angular). 
+
+## Introduction
 
 JavaScript is used increasingly to provide a native-like application experience in the web. One
 major avenue of this has been in the use of Single Page Applications or SPAs. SPAs
@@ -34,6 +39,7 @@ to get it started.
 For the full docs on the API, start the backend server and navigate to the root (very likely to be `localhost:5000`, the exact url will be printed when you run the backend, see backend/README.md for more info). You'll see all the endpoints, descriptions and expected responses.
 
 ## A Working Product
+
 Your application should be compatible with 'modern' Chrome, Safari, and Mozilla browsers.
 We will assume your browser has JavaScript enabled, and supports ES6 syntax.
 
@@ -56,6 +62,7 @@ You are not permitted to use frameworks (React, Angular, Vue ...)
 You are permitted to use small snippets of general purpose code from external sources such as Stack Overflow with proper attribution.
 
 ## Getting Started
+
 Clone the repository provided. It has a whole bunch of code, documentation, and a whole working server you'll need for
 developing your frontend applicaiton.
 
@@ -63,6 +70,7 @@ Please read the relevant docs for setup in the folders `/backend` and `/frontend
 Each folder outlines basic steps to get started. There are also some comments provided in the frontend source code.
 
 ## Milestones
+
 Level 0 focuses on the basic user interface and interaction with of the site.
 There is no need to implement any integration with the backend for this level.
 When demonstrating the functionality included in level 0, you are not required to prevent access 
@@ -85,7 +93,6 @@ interact with the backend for level 0, all attempts to log in would fail. Thus, 
 the site to inform the user that authentication has failed.
 
 **Registration**
-
 ```html
 <!-- 
     Before seeing the form, a 'Sign Up' button
@@ -140,6 +147,7 @@ While completing these tasks for level 0, consider the future inclusion of HTTP 
 designing your code - this will be helpful for future levels.
 
 ## Level 1
+
 Level 1 focuses on fetching data from the API.
 
 **Login**
@@ -163,6 +171,7 @@ are to appear at this level of functionality. In the actual system called reddit
 In level 4 you will implement multiple subseddits where posts are organised into groups much like reddit.
 
 ## Level 2
+
 Level 2 focuses on a richer UX and will require some further backend interaction.
 
 **Show Upvotes**
@@ -190,6 +199,7 @@ Logged in users can see their own profile information such as username, number o
 number of upvotes across all posts. Get this information from (`GET /user`)
 
 ## Level 3
+
 Level 3 focuses on more advanced features that will take time to implement and will
 involve a more rigourously designed app to execute.
 
@@ -230,6 +240,7 @@ Let a logged in user search for a post made by any user that they follow. You'll
 potentially combine a few different endpoint responses to allow this. 
 
 ## Level 4
+
 This set of tasks is an extension beyond the previous levels and should only be attempted once the previous levels have been completed.
 
 **Multiple Subseddits**
